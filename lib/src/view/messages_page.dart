@@ -39,9 +39,11 @@ class _MessagesPageState extends State<MessagesPage> {
               children: <Widget>[
                 ProfilePhoto(
                   photo: viewModel.contactUser.profilePhotoUrl,
-                  placeholderImagePath: viewModel.settings.profilePhotoPlaceholderPath,
+                  placeholderImagePath:
+                      viewModel.settings.profilePhotoPlaceholderPath,
                   radius: viewModel.settings.profilePhotoRadius,
-                  backgroundColor: viewModel.settings.profilePhotoBackgroundColor,
+                  backgroundColor:
+                      viewModel.settings.profilePhotoBackgroundColor,
                 ),
                 SizedBox(
                     width:
@@ -331,21 +333,14 @@ class _MessagesPageState extends State<MessagesPage> {
             Icons.send,
             color: Colors.white,
           ),
-          onPressed: () => _sendMessageButtonPressed(context),
+          onPressed: () {
+            String messageBody = _messageTextFieldController.text;
+            _messageTextFieldController.clear();
+            viewModel.sendMessage(messageBody);
+          },
         ),
       ),
     );
-  }
-
-  _sendMessageButtonPressed(BuildContext context) async {
-    MessagesViewModel messagesViewModel =
-        Provider.of<MessagesViewModel>(context, listen: false);
-    // ContactsViewModel contactsViewModel = Provider.of<ContactsViewModel>(context);
-    String messageBody = _messageTextFieldController.text;
-    _messageTextFieldController.clear();
-    Message newLastMessage = await messagesViewModel.sendMessage(messageBody);
-    //contactsViewModel.updateLastMessageCallback(newLastMessage);
-    //contactsViewModel.updateMessageStatusCallback(newLastMessage);
   }
 
   // TODO : Edit this

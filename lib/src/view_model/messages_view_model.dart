@@ -8,6 +8,7 @@ import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/custom_user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/repository/messages_database_repository.dart';
+import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
@@ -54,6 +55,7 @@ class MessagesViewModel with ChangeNotifier {
   final LanguageSettings languageSettings;
 
   MessagesDatabaseRepository _messagesDatabaseRepository;
+  NotificationRepository _notificationRepository;
 
   MessagesViewModel({
     @required String userId,
@@ -62,10 +64,12 @@ class MessagesViewModel with ChangeNotifier {
     @required this.firebaseSettings,
     @required this.languageSettings,
     @required MessagesDatabaseRepository messagesDatabaseRepository,
+    @required NotificationRepository notificationRepository,
   }) {
     _currentDatabaseUserId = userId;
     _contactUser = contactUser;
     _messagesDatabaseRepository = messagesDatabaseRepository;
+    _notificationRepository = _notificationRepository;
     _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
@@ -195,7 +199,13 @@ class MessagesViewModel with ChangeNotifier {
     }*/
   }
 
-  Future<Message> sendMessage(
+  sendMessage(String messageBody) async {
+    Message newLastMessage = await _sendMessage(messageBody);
+    //contactsViewModel.updateLastMessageCallback(newLastMessage);
+    //contactsViewModel.updateMessageStatusCallback(newLastMessage);
+  }
+
+  Future<Message> _sendMessage(
     String messageBody, {
     String randomIdParam = '',
     int messageType = Message.MESSAGE_TYPE_TEXT,
@@ -213,7 +223,7 @@ class MessagesViewModel with ChangeNotifier {
         messageType: messageType,
         randomIdParam: randomIdParam,
       );
-      //m.contactUser = _contactUser;
+      m.contactUser = _contactUser;
       _messages.insert(0, m);
       notifyListeners();
       try {
@@ -221,7 +231,7 @@ class MessagesViewModel with ChangeNotifier {
             .sendMessage(_currentDatabaseUserId, m);
         if (result == MessagesDatabaseResult.Success) {
           //m.status = Message.STATUS_SENT;
-          // TODO: Send Notification when implement FCM ** IMPORTANT **
+          _sendNotification(m.messageBody);
         } else {
           updateMessageStatus(m, Message.STATUS_ERROR);
         }
@@ -232,6 +242,15 @@ class MessagesViewModel with ChangeNotifier {
       return m;
     }
     return null;
+  }
+
+
+  _sendNotification(String messageBody) {
+    _notificationRepository.sendNotification(
+      "",
+      messageBody,
+      _contactUser.notificationId,
+    );
   }
 
   Future<Message> retryToSendMessage(int index, Message message) {
@@ -316,7 +335,6 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   newMessageHandler(Message newMessage) {
-    print("!!!!!!  " + newMessage.toString());
     for (Message m in _messages) {
       if (m.randomId == newMessage.randomId) {
         m.messageId = newMessage.messageId;

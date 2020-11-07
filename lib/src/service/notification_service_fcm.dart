@@ -31,7 +31,7 @@ class FcmNotificationService implements NotificationBase {
   }
 
   @override
-  Future<void> initialize() {
+  Future initialize() {
     _firebaseMessaging.configure(
       onMessage: _onMessage,
       onBackgroundMessage: _onBackgroundMessage,
@@ -40,19 +40,19 @@ class FcmNotificationService implements NotificationBase {
     );
   }
 
-  Future<dynamic> _onMessage(Map<String, dynamic> message) {
+  Future _onMessage(Map<String, dynamic> message) {
     _showNotification(message);
   }
 
-  Future<dynamic> _onBackgroundMessage(Map<String, dynamic> message) {
+  Future _onBackgroundMessage(Map<String, dynamic> message) {
     if (message.containsKey('data')) {
       _showNotification(message);
     }
   }
 
-  Future<dynamic> _onLaunch(Map<String, dynamic> message) {}
+  Future _onLaunch(Map<String, dynamic> message) {}
 
-  Future<dynamic> _onResume(Map<String, dynamic> message) {}
+  Future _onResume(Map<String, dynamic> message) {}
 
   _showNotification(Map<String, dynamic> message) async {
     if (message.containsKey('data')) {

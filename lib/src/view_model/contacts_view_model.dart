@@ -6,6 +6,7 @@ import 'package:c_messaging/src/model/custom_user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/repository/custom_user_database_repository.dart';
 import 'package:c_messaging/src/repository/messages_database_repository.dart';
+import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
@@ -52,6 +53,7 @@ class ContactsViewModel with ChangeNotifier {
 
   MessagesDatabaseRepository _messagesDatabaseRepository;
   CustomUserDatabaseRepository _customUserDatabaseRepository;
+  NotificationRepository _notificationRepository;
 
   ContactsViewModel({
     @required String userId,
@@ -61,10 +63,12 @@ class ContactsViewModel with ChangeNotifier {
     @required this.languageSettings,
     @required MessagesDatabaseRepository messagesDatabaseRepository,
     @required CustomUserDatabaseRepository customUserDatabaseRepository,
+    @required NotificationRepository notificationRepository,
   }) {
     _currentDatabaseUserId = userId;
     _messagesDatabaseRepository = messagesDatabaseRepository;
     _customUserDatabaseRepository = customUserDatabaseRepository;
+    _notificationRepository = notificationRepository;
     _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
@@ -245,6 +249,7 @@ class ContactsViewModel with ChangeNotifier {
             firebaseSettings: firebaseSettings,
             languageSettings: languageSettings,
             messagesDatabaseRepository: _messagesDatabaseRepository,
+            notificationRepository: _notificationRepository,
           ),
           child: MessagesPage(),
         ),

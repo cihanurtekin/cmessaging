@@ -33,7 +33,13 @@ class CMessaging {
     ContactsPageSettings contactsPageSettings,
     MessagesPageSettings messagesPageSettings,
     LanguageSettings languageSettings,
-    Function onMessageReceived,
+    Function(
+      int notificationId,
+      String title,
+      String body,
+      String receiverNotificationId,
+    )
+        onMessageReceived,
   }) {
     _userId = userId;
     _serviceSettings = serviceSettings;
@@ -66,16 +72,16 @@ class CMessaging {
       MaterialPageRoute(
         builder: (BuildContext context) => ChangeNotifierProvider(
           create: (context) => ContactsViewModel(
-            userId: _userId,
-            settings: _contactsPageSettings,
-            messagesPageSettings: _messagesPageSettings,
-            firebaseSettings: _firebaseSettings,
-            languageSettings: _languageSettings,
-            messagesDatabaseRepository:
-                _repositories.messagesDatabaseRepository,
-            customUserDatabaseRepository:
-                _repositories.customUserDatabaseRepository,
-          ),
+              userId: _userId,
+              settings: _contactsPageSettings,
+              messagesPageSettings: _messagesPageSettings,
+              firebaseSettings: _firebaseSettings,
+              languageSettings: _languageSettings,
+              messagesDatabaseRepository:
+                  _repositories.messagesDatabaseRepository,
+              customUserDatabaseRepository:
+                  _repositories.customUserDatabaseRepository,
+              notificationRepository: _repositories.notificationRepository),
           child: MessageContactsPage(),
         ),
       ),
@@ -108,6 +114,7 @@ class CMessaging {
             languageSettings: _languageSettings,
             messagesDatabaseRepository:
                 _repositories.messagesDatabaseRepository,
+            notificationRepository: _repositories.notificationRepository,
           ),
           child: MessagesPage(),
         ),
