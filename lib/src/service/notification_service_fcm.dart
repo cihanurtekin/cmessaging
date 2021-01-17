@@ -26,18 +26,18 @@ class FcmNotificationService implements NotificationBase {
     _onMessageReceived = onMessageReceived;
     _fcmServerKey = _firebaseSettings.fcmServerKey;
     _fcmNotificationUrl = _firebaseSettings.fcmNotificationUrl;
-    _firebaseMessaging = FirebaseMessaging();
+    _firebaseMessaging = FirebaseMessaging.instance;
     getNotificationId();
   }
 
   @override
   Future initialize() {
-    _firebaseMessaging.configure(
+    /*_firebaseMessaging.configure(
       onMessage: _onMessage,
       onBackgroundMessage: _onBackgroundMessage,
       onLaunch: _onLaunch,
       onResume: _onResume,
-    );
+    );*/
   }
 
   Future _onMessage(Map<String, dynamic> message) {

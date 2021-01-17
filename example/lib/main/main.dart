@@ -1,3 +1,4 @@
+import 'package:example/main/home_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -12,17 +13,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: Sentences.appTitle(),
+      title: "C Messaging",
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(title: Sentences.homePageTitle()),
-      routes: router.Router.getRoutes(),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate
-      ],
-      supportedLocales: [Locale('en', ''), Locale('tr', '')],
+      home: HomePage(),
+      //routes: router.Router.getRoutes(),
+      //localizationsDelegates: [
+      //  GlobalMaterialLocalizations.delegate,
+      //  GlobalWidgetsLocalizations.delegate
+      //],
+      //supportedLocales: [Locale('en', ''), Locale('tr', '')],
     );
   }
 }
