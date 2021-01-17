@@ -1,5 +1,5 @@
-import 'package:example/main/model/user.dart';
-import 'package:example/main/view_model/all_users_view_model.dart';
+import 'package:example/model/user.dart';
+import 'package:example/view_model/all_users_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
