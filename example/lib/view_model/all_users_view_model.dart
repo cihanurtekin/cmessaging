@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:example/main/c_messaging_custom.dart';
 import 'package:example/model/user.dart';
 import 'package:flutter/material.dart';
+import 'package:c_messaging/c_messaging.dart';
 
 enum AllUsersViewState { Idle, Loading }
 
@@ -51,6 +51,6 @@ class AllUsersViewModel with ChangeNotifier {
   }
 
   openContactsPage(BuildContext context){
-    CMessagingCustom().get().pushContactsPage(context);
+    CMessaging().pushContactsPage(context);
   }
 }

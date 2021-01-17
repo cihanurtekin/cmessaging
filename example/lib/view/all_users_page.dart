@@ -27,7 +27,7 @@ class _AllUsersPageState extends State<AllUsersPage> {
               itemBuilder: (context, index) {
                 User user = viewModel.users[index];
                 return ListTile(
-                  title: Text(user.nameSurname),
+                  title: Text(user.username),
                   subtitle: Text(user.userId),
                   onTap: () async {
                     /*await getCurrentDatabaseUser();
