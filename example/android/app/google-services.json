@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "701402322551",
+    "project_id": "cmessagingexample",
+    "storage_bucket": "cmessagingexample.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701402322551:android:0d57b161f5820b42235872",
+        "android_client_info": {
+          "package_name": "com.korfas.cmessagingexample"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "701402322551-9hvpjmv3f3dv9ght7sq3r3c597s7c3ch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.korfas.cmessagingexample",
+            "certificate_hash": "1e19ca4dba757416945627aa7794cba5b1c8bdb7"
+          }
+        },
+        {
+          "client_id": "701402322551-ct2b6rmblv52g0a80sai5hc6jkofb5bc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArr5mBrUAFs-Pjlc--FMe4q9huoP0uymw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "701402322551-ct2b6rmblv52g0a80sai5hc6jkofb5bc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
