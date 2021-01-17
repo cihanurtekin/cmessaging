@@ -13,6 +13,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CMessaging {
+  static final CMessaging _cMessaging = CMessaging._internal();
+
+  factory CMessaging() {
+    return _cMessaging;
+  }
+
+  CMessaging._internal();
+
   String _userId;
 
   ServiceSettings _serviceSettings;
@@ -21,12 +29,32 @@ class CMessaging {
   MessagesPageSettings _messagesPageSettings;
   LanguageSettings _languageSettings;
 
+  set serviceSettings(ServiceSettings value) {
+    _serviceSettings = value;
+  }
+
+  set firebaseSettings(FirebaseSettings value) {
+    _firebaseSettings = value;
+  }
+
+  set contactsPageSettings(ContactsPageSettings value) {
+    _contactsPageSettings = value;
+  }
+
+  set messagesPageSettings(MessagesPageSettings value) {
+    _messagesPageSettings = value;
+  }
+
+  set languageSettings(LanguageSettings value) {
+    _languageSettings = value;
+  }
+
   Repositories _repositories;
 
   Function(int notificationId, String title, String body,
       String receiverNotificationId) _onMessageReceived;
 
-  CMessaging({
+  init({
     @required String userId,
     @required ServiceSettings serviceSettings,
     @required FirebaseSettings firebaseSettings,
@@ -52,6 +80,12 @@ class CMessaging {
     _checkNullAndSetDefaultValues();
   }
 
+  bool get isInitialized {
+    return _userId != null &&
+        _serviceSettings != null &&
+        _firebaseSettings != null;
+  }
+
   _initRepositories() {
     _repositories = Repositories(
       firebaseSettings: _firebaseSettings,
@@ -67,25 +101,27 @@ class CMessaging {
   }
 
   pushContactsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => ChangeNotifierProvider(
-          create: (context) => ContactsViewModel(
-              userId: _userId,
-              settings: _contactsPageSettings,
-              messagesPageSettings: _messagesPageSettings,
-              firebaseSettings: _firebaseSettings,
-              languageSettings: _languageSettings,
-              messagesDatabaseRepository:
-                  _repositories.messagesDatabaseRepository,
-              customUserDatabaseRepository:
-                  _repositories.customUserDatabaseRepository,
-              notificationRepository: _repositories.notificationRepository),
-          child: MessageContactsPage(),
+    if (isInitialized) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ChangeNotifierProvider(
+            create: (context) => ContactsViewModel(
+                userId: _userId,
+                settings: _contactsPageSettings,
+                messagesPageSettings: _messagesPageSettings,
+                firebaseSettings: _firebaseSettings,
+                languageSettings: _languageSettings,
+                messagesDatabaseRepository:
+                    _repositories.messagesDatabaseRepository,
+                customUserDatabaseRepository:
+                    _repositories.customUserDatabaseRepository,
+                notificationRepository: _repositories.notificationRepository),
+            child: MessageContactsPage(),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   pushMessagesPage(
@@ -101,24 +137,25 @@ class CMessaging {
       profilePhotoUrl: contactProfilePhotoUrl,
       notificationId: contactNotificationId,
     );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => ChangeNotifierProvider(
-          create: (context) => MessagesViewModel(
-            userId: _userId,
-            contactUser: contactUser,
-            settings: _messagesPageSettings,
-            firebaseSettings: _firebaseSettings,
-            languageSettings: _languageSettings,
-            messagesDatabaseRepository:
-                _repositories.messagesDatabaseRepository,
-            notificationRepository: _repositories.notificationRepository,
+    if (isInitialized) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ChangeNotifierProvider(
+            create: (context) => MessagesViewModel(
+              userId: _userId,
+              contactUser: contactUser,
+              settings: _messagesPageSettings,
+              firebaseSettings: _firebaseSettings,
+              languageSettings: _languageSettings,
+              messagesDatabaseRepository:
+                  _repositories.messagesDatabaseRepository,
+              notificationRepository: _repositories.notificationRepository,
+            ),
+            child: MessagesPage(),
           ),
-          child: MessagesPage(),
         ),
-      ),
-    );
+      );
+    }
   }
 }

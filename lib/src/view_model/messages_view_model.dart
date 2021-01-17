@@ -244,13 +244,17 @@ class MessagesViewModel with ChangeNotifier {
     return null;
   }
 
-
   _sendNotification(String messageBody) {
-    _notificationRepository.sendNotification(
-      "",
-      messageBody,
-      _contactUser.notificationId,
-    );
+    String ntfId = contactUser.notificationId;
+    if (ntfId != null &&
+        ntfId.isNotEmpty &&
+        contactUser.notificationId != firebaseSettings.defaultNotificationId) {
+      _notificationRepository.sendNotification(
+        "",
+        messageBody,
+        _contactUser.notificationId,
+      );
+    }
   }
 
   Future<Message> retryToSendMessage(int index, Message message) {
