@@ -6,22 +6,21 @@ homepage: ''
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
-  flutter: ">=1.17.0 <2.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^0.7.0
-  firebase_messaging: ^8.0.0-dev.14
-  cloud_firestore: ^0.16.0
+  firebase_core: ^1.0.3
+  firebase_messaging: ^9.1.1
+  cloud_firestore: ^1.0.4
 
-  uuid: ^2.2.2
-  intl: ^0.16.1
-  get_it: ^5.0.1
-  provider: ^4.3.2+2
-  image_picker: ^0.6.7+12
-  cached_network_image: ^2.3.3
+  uuid: ^3.0.4
+  intl: ^0.17.0
+  get_it: ^6.0.0
+  provider: ^5.0.0
+  image_picker: ^0.7.4
+  cached_network_image: ^3.0.0
 
 
 dev_dependencies:

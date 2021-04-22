@@ -87,8 +87,9 @@ class FcmNotificationService implements NotificationBase {
       firebaseMessagingId: receiverNotificationId,
     );
 
+    Uri fcmNotificationUri = Uri.parse(_fcmNotificationUrl);
     await http
-        .post(_fcmNotificationUrl, body: notification, headers: headers)
+        .post(fcmNotificationUri, body: notification, headers: headers)
         .then((_) {})
         .catchError((e) {
       result = NotificationResult.Error;
