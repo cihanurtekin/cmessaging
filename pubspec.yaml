@@ -5,19 +5,19 @@ author: ''
 homepage: ''
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^1.0.3
-  firebase_messaging: ^9.1.1
-  cloud_firestore: ^1.0.4
+  firebase_core: ^1.0.4
+  firebase_messaging: ^9.1.2
+  cloud_firestore: ^1.0.6
 
   uuid: ^3.0.4
   intl: ^0.17.0
-  get_it: ^6.0.0
+  get_it: ^6.1.1
   provider: ^5.0.0
   image_picker: ^0.7.4
   cached_network_image: ^3.0.0

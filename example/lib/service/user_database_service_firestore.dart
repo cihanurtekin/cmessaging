@@ -14,20 +14,20 @@ class FirestoreUserDatabaseService {
         Settings(persistenceEnabled: firestorePersistenceEnabled);
   }
 
-  FirebaseFirestore _firestore;
+  late FirebaseFirestore _firestore;
 
-  Future<User> getUser(dynamic userId) async {
+  Future<User?> getUser(dynamic userId) async {
     if (userId is String) {
       DocumentSnapshot snapshot =
           await _firestore.collection("users").doc(userId).get();
 
-      Map<String, dynamic> snapshotData = snapshot.data();
+      Map<String, dynamic>? snapshotData = snapshot.data();
 
       if (snapshotData != null) {
         String profilePhotoUrl = snapshotData[User.profilePhotoUrlKey] ??
             CustomFirebaseSettings.DEFAULT_PROFILE_PHOTO_URL;
-        String username =
-            snapshotData[User.usernameKey] ?? CustomFirebaseSettings.DEFAULT_USERNAME;
+        String username = snapshotData[User.usernameKey] ??
+            CustomFirebaseSettings.DEFAULT_USERNAME;
         String email = snapshotData[User.emailKey] ?? '';
         String firebaseMessagingId = snapshotData[User.notificationIdKey] ?? '';
 
@@ -39,27 +39,21 @@ class FirestoreUserDatabaseService {
           notificationId: firebaseMessagingId,
         );
         return user;
-      } else {
-        return null;
       }
-    } else {
-      return null;
     }
+    return null;
   }
 
-  @override
-  Future<User> getCurrentDatabaseUser() async {
+  Future<User?> getCurrentDatabaseUser() async {
     // Repository uses getUser to get current database user. Leave this method returns null.
-    return null;
+    return Future.value();
   }
 
-  @override
-  Future<User> updateCurrentDatabaseUser() {
+  Future<User?> updateCurrentDatabaseUser() {
     // Repository uses getUser to update current database user. Leave this method returns null.
-    return null;
+    return Future.value();
   }
 
-  @override
   Future<void> addUser(User user) async {
     await FirebaseFirestore.instance
         .collection(CustomFirebaseSettings.USERS_COLLECTION_NAME)
@@ -67,7 +61,6 @@ class FirestoreUserDatabaseService {
         .set(user.toMap());
   }
 
-  @override
   Future<UserBaseResult> updateUser(
       userId, Map<String, dynamic> newValues) async {
     UserBaseResult result = UserBaseResult.Error;

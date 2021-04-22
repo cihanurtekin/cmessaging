@@ -47,18 +47,18 @@ class RegisterViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> signUpWithEmailAndPassword(BuildContext context, String email,
+  Future<String?> signUpWithEmailAndPassword(BuildContext context, String email,
       String password, String username) async {
     //LoadingAlertDialog dialog = LoadingAlertDialog(loadingText: Sentences.registering());
     //DialogHelper.show(context, dialog, barrierDismissible: false);
     state = RegisterViewState.Loading;
-    String currentUserId;
+    String? currentUserId;
     try {
-      User user = await _authService.signUpWithEmailAndPassword(
-          email, password, username);
+      User? user = await _authService.signUpWithEmailAndPassword(
+          email, password, username,);
       if (user != null) {
         await _authService.sendEmailVerification();
-        String notificationId = await _notificationService.getNotificationId();
+        String? notificationId = await _notificationService.getNotificationId();
         if (notificationId != null) {
           user.notificationId = notificationId;
         }
@@ -77,7 +77,7 @@ class RegisterViewModel with ChangeNotifier {
     return currentUserId;
   }
 
-  _navigateToAllUsersPage(BuildContext context, String currentUserId) {
+  _navigateToAllUsersPage(BuildContext context, String? currentUserId) {
     if (currentUserId != null && currentUserId.trim().isNotEmpty) {
       Navigator.pushReplacementNamed(context, CustomRouter.ALL_USERS_PAGE);
     }

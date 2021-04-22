@@ -9,7 +9,7 @@ class AllUsersPage extends StatefulWidget {
 }
 
 class _AllUsersPageState extends State<AllUsersPage> {
-  User _currentDatabaseUser;
+  User? _currentDatabaseUser;
 
   //UserDatabaseRepository _userDatabaseRepository = locator<UserDatabaseRepository>();
 
@@ -52,7 +52,7 @@ class _AllUsersPageState extends State<AllUsersPage> {
     );
   }
 
-  Future<User> getCurrentDatabaseUser() async {
+  Future<User?> getCurrentDatabaseUser() async {
     if (_currentDatabaseUser != null) {
       return _currentDatabaseUser;
     }

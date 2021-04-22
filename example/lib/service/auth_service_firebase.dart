@@ -1,62 +1,37 @@
 import 'package:example/model/user.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:google_sign_in/google_sign_in.dart';
 
 class FirebaseAuthService {
   final auth.FirebaseAuth _auth = auth.FirebaseAuth.instance;
 
-  User _currentUser;
+  User? _currentUser;
 
-  User get currentUser => _currentUser;
+  User? get currentUser => _currentUser;
 
-  Future<String> getCurrentUserId() async {
+  Future<String?> getCurrentUserId() async {
     if (currentUser != null) {
-      return currentUser.userId;
+      return currentUser?.userId;
     }
-    auth.User firebaseUser = _auth.currentUser;
+    auth.User? firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
       return firebaseUser.uid;
-    } else {
-      return null;
     }
+    return null;
   }
 
-  Future<User> signInAnonymously() async {
+  Future<User?> signInAnonymously() async {
     auth.UserCredential credential = await _auth.signInAnonymously();
-    auth.User firebaseUser = credential.user;
-    User user = _userFromFirebaseUser(firebaseUser);
+    auth.User? firebaseUser = credential.user;
+    User? user = _userFromFirebaseUser(firebaseUser);
     return user;
   }
 
-  Future<User> signInWithEmailAndPassword(String email, String password) async {
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
     auth.UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email, password: password);
-    auth.User firebaseUser = credential.user;
-    User user = _userFromFirebaseUser(firebaseUser);
-    return user;
-  }
-
-  Future<User> signInWithGoogle() async {
-    GoogleSignIn googleSignIn = GoogleSignIn(
-      scopes: [
-        'email',
-        //'https://www.googleapis.com/auth/contacts.readonly',
-      ],
-    );
-
-    if (await googleSignIn.isSignedIn()) {
-      await googleSignIn.signOut();
-    }
-    GoogleSignInAccount googleUser = await googleSignIn.signIn();
-    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    auth.AuthCredential authCredential = auth.GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    final auth.UserCredential userCredential =
-        await _auth.signInWithCredential(authCredential);
-    auth.User firebaseUser = userCredential.user;
-    User user = _userFromFirebaseUser(firebaseUser);
+    auth.User? firebaseUser = credential.user;
+    User? user = _userFromFirebaseUser(firebaseUser);
     return user;
   }
 
@@ -65,30 +40,36 @@ class FirebaseAuthService {
     return true;
   }
 
-  Future<User> signUpWithEmailAndPassword(
-      String email, String password, String username) async {
+  Future<User?> signUpWithEmailAndPassword(
+    String email,
+    String password,
+    String username,
+  ) async {
     auth.UserCredential credential = await _auth.createUserWithEmailAndPassword(
-        email: email, password: password);
-    auth.User firebaseUser = credential.user;
-    if (firebaseUser != null && firebaseUser.email != null) {
-      User user =
-          User(firebaseUser.uid, firebaseUser.email, username: username);
-      return user;
-    } else {
-      return null;
-    }
+      email: email,
+      password: password,
+    );
+    auth.User? firebaseUser = credential.user;
+    User? user = _userFromFirebaseUser(firebaseUser);
+    user?.username = username;
+    return user;
   }
 
-  User _userFromFirebaseUser(auth.User firebaseUser) {
-    if (firebaseUser != null && firebaseUser.email != null) {
-      User user = User(firebaseUser.uid, firebaseUser.email);
-      if (firebaseUser.displayName != null) {
-        user.username = firebaseUser.displayName;
+  User? _userFromFirebaseUser(auth.User? firebaseUser) {
+    if (firebaseUser != null) {
+      String? email = firebaseUser.email;
+      if (email != null) {
+        User user = User(firebaseUser.uid, email);
+        String? displayName = firebaseUser.displayName;
+        String? photoURL = firebaseUser.photoURL;
+        if (displayName != null) {
+          user.username = displayName;
+        }
+        if (photoURL != null) {
+          user.profilePhotoUrl = photoURL;
+        }
+        return user;
       }
-      if (firebaseUser.photoURL != null) {
-        user.profilePhotoUrl = firebaseUser.photoURL;
-      }
-      return user;
     }
     return null;
   }
@@ -99,13 +80,19 @@ class FirebaseAuthService {
   }
 
   Future<bool> sendEmailVerification() async {
-    auth.User firebaseUser = _auth.currentUser;
-    await firebaseUser.sendEmailVerification();
-    return true;
+    auth.User? firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      await firebaseUser.sendEmailVerification();
+      return true;
+    }
+    return false;
   }
 
   Future<bool> checkIfEmailVerified() async {
-    auth.User firebaseUser = _auth.currentUser;
-    return firebaseUser.emailVerified;
+    auth.User? firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      return firebaseUser.emailVerified;
+    }
+    return false;
   }
 }

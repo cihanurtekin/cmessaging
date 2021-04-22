@@ -1,22 +1,23 @@
 import 'package:c_messaging/src/base/messages_database_base.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/message.dart';
+import 'package:c_messaging/src/service/base/messages_database_service.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
+import 'package:c_messaging/src/settings/settings_base.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 
-class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
-  FirebaseSettings _firebaseSettings;
-  FirebaseFirestore _firestore;
+class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late FirebaseSettings _firebaseSettings;
 
-  FirestoreMessagesDatabaseService({
-    @required FirebaseSettings firebaseSettings,
-  }) {
-    _firebaseSettings = firebaseSettings;
-    _firestore = FirebaseFirestore.instance;
-    _firestore.settings = Settings(
-      persistenceEnabled: _firebaseSettings.firestorePersistenceEnabledMessages,
-    );
+  @override
+  void initialize(SettingsBase settings) {
+    if (settings is FirebaseSettings) {
+      _firebaseSettings = settings;
+      _firestore.settings = Settings(
+        persistenceEnabled: settings.firestorePersistenceEnabledMessages,
+      );
+    }
   }
 
   @override
@@ -55,9 +56,9 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
   }
 
   @override
-  Future<Message> getMessage(String currentUserId, String messageUid) {
+  Future<Message?> getMessage(String currentUserId, String messageUid) {
     // TODO: implement getMessage
-    return null;
+    return Future.value();
   }
 
   @override
@@ -71,9 +72,9 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
     Map<String, dynamic> messageMapDocRefReceiver = message.toMap();
 
     messageMapDocRefSender[Message.dateOfCreatedKey] =
-        FieldValue.serverTimestamp() ?? "";
+        FieldValue.serverTimestamp();
     messageMapDocRefReceiver[Message.dateOfCreatedKey] =
-        FieldValue.serverTimestamp() ?? "";
+        FieldValue.serverTimestamp();
 
     DocumentReference docRefSender =
         _getFirestoreContactDocument(message.senderId, message.receiverId);
@@ -163,7 +164,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
     lastMessageToStartAfter,
     int paginationLimit,
   ) async {
-    DocumentSnapshot lastMessageDocument;
+    DocumentSnapshot? lastMessageDocument;
     if (lastMessageToStartAfter != null) {
       try {
         lastMessageDocument = lastMessageToStartAfter as DocumentSnapshot;
@@ -201,11 +202,14 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
     if (qs.docs.length > 0) {
       for (DocumentSnapshot doc in qs.docs) {
         try {
-          Message m = getMessageFromDocumentSnapshot(doc);
-          messages.add(m);
+          Message? m = getMessageFromDocumentSnapshot(doc);
+          if (m != null) {
+            messages.add(m);
+          }
         } catch (e) {
-          print(
-              "FirestoreMessagesDatabaseService / getMessagesAndLastMessageWithPagination : ${e.toString()}");
+          print("FirestoreMessagesDatabaseService / "
+              "getMessagesAndLastMessageWithPagination : "
+              "${e.toString()}");
           //messages = [];
           //break;
         }
@@ -215,15 +219,18 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
     return [List<Message>.from(messages), lastMessageDocument];
   }
 
-  Message getMessageFromDocumentSnapshot(DocumentSnapshot doc) {
-    Map<String, dynamic> messageMap = doc.data();
-    messageMap[Message.dateOfCreatedKey] = doc.metadata.hasPendingWrites
-        ? DateTime.now()
-        : messageMap[Message.dateOfCreatedKey] =
-            (messageMap[Message.dateOfCreatedKey] as Timestamp).toDate();
+  Message? getMessageFromDocumentSnapshot(DocumentSnapshot doc) {
+    Map<String, dynamic>? messageMap = doc.data();
+    if (messageMap != null) {
+      messageMap[Message.dateOfCreatedKey] = doc.metadata.hasPendingWrites
+          ? DateTime.now()
+          : messageMap[Message.dateOfCreatedKey] =
+              (messageMap[Message.dateOfCreatedKey] as Timestamp).toDate();
 
-    Message m = Message.fromMap(doc.id, messageMap);
-    return m;
+      Message m = Message.fromMap(doc.id, messageMap);
+      return m;
+    }
+    return null;
   }
 
   @override
@@ -264,7 +271,8 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
   }
 
   @override
-  Stream<List<Message>> addListenerToMessages(String currentUserId, contactId) {
+  Stream<List<Message?>> addListenerToMessages(
+      String currentUserId, contactId) {
     Stream<QuerySnapshot> qsStream =
         _getFirestoreContactDocument(currentUserId, contactId)
             .collection(_firebaseSettings.messagesOfUserCollectionName)
@@ -287,7 +295,8 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseBase {
   }
 
   @override
-  Stream<List<Message>> addListenerToContacts(String currentUserId, contactId) {
+  Stream<List<Message?>> addListenerToContacts(
+      String currentUserId, contactId) {
     Stream<QuerySnapshot> qsStream = _firestore
         .collection(_firebaseSettings.messagesCollectionName)
         .doc(currentUserId)

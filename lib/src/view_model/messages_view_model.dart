@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:c_messaging/src/base/messages_database_base.dart';
 import 'package:c_messaging/src/custom_widgets/photo_picker.dart';
 import 'package:c_messaging/src/dialog/dialog_helper.dart';
+import 'package:c_messaging/src/helper/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/custom_user.dart';
 import 'package:c_messaging/src/model/message.dart';
@@ -14,6 +15,7 @@ import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:collection/collection.dart';
 
 enum MessagesViewState {
   Idle,
@@ -34,13 +36,13 @@ class MessagesViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  StreamSubscription _newMessageSubscription;
+  StreamSubscription? _newMessageSubscription;
 
   /// It prevents to duplicate the last message
   //bool _listenFirstQuery = true;
 
-  String _currentDatabaseUserId;
-  CustomUser _contactUser;
+  String? _currentDatabaseUserId;
+  late CustomUser _contactUser;
 
   CustomUser get contactUser => _contactUser;
 
@@ -54,22 +56,20 @@ class MessagesViewModel with ChangeNotifier {
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  MessagesDatabaseRepository _messagesDatabaseRepository;
-  NotificationRepository _notificationRepository;
+  MessagesDatabaseRepository _messagesDatabaseRepository =
+      locator<MessagesDatabaseRepository>();
+  NotificationRepository _notificationRepository =
+      locator<NotificationRepository>();
 
   MessagesViewModel({
-    @required String userId,
-    @required CustomUser contactUser,
-    @required this.settings,
-    @required this.firebaseSettings,
-    @required this.languageSettings,
-    @required MessagesDatabaseRepository messagesDatabaseRepository,
-    @required NotificationRepository notificationRepository,
+    required String userId,
+    required CustomUser contactUser,
+    required this.settings,
+    required this.firebaseSettings,
+    required this.languageSettings,
   }) {
     _currentDatabaseUserId = userId;
     _contactUser = contactUser;
-    _messagesDatabaseRepository = messagesDatabaseRepository;
-    _notificationRepository = _notificationRepository;
     _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
@@ -77,9 +77,7 @@ class MessagesViewModel with ChangeNotifier {
 
   @override
   dispose() {
-    if (_newMessageSubscription != null) {
-      _newMessageSubscription.cancel();
-    }
+    _newMessageSubscription?.cancel();
     _messages.clear();
     _lastMessageToStartAfter = null;
     super.dispose();
@@ -101,7 +99,7 @@ class MessagesViewModel with ChangeNotifier {
       try {
         messageListAndLastMessage = await _messagesDatabaseRepository
             .getMessagesAndLastMessageWithPagination(
-          _currentDatabaseUserId,
+          _currentDatabaseUserId!,
           _contactUser.userId,
           ListType.Messages,
           _lastMessageToStartAfter,
@@ -118,7 +116,7 @@ class MessagesViewModel with ChangeNotifier {
     }
   }
 
-  Future<Message> deleteMessage(int index) async {
+  Future<Message?> deleteMessage(int index) async {
     Message messageToDelete = _messages[index];
     _messages.removeAt(index);
     //messages.removeWhere((m) => m.messageUid == messageToDelete.messageUid);
@@ -130,7 +128,7 @@ class MessagesViewModel with ChangeNotifier {
         //newLastMessage.contactUser = _contactUser;
         MessagesDatabaseResult result =
             await _messagesDatabaseRepository.deleteMessage(
-                _currentDatabaseUserId,
+                _currentDatabaseUserId!,
                 messageToDelete,
                 isLastMessage,
                 newLastMessage);
@@ -147,32 +145,33 @@ class MessagesViewModel with ChangeNotifier {
         //_contactsViewModel.updateLastMessageCallback(newLastMessage);
       }
       return newLastMessage;
-    } else {
-      return null;
     }
+    return null;
   }
 
   sendImageMessage(BuildContext context) async {
-    File imageFile = await PhotoPicker(
-      languageSettings.takePhoto,
-      languageSettings.chooseFromGallery,
-      languageSettings.cancel,
+    File? imageFile = await PhotoPicker(
+      takePhotoText: languageSettings.takePhoto,
+      chooseFromGalleryText: languageSettings.chooseFromGallery,
+      cancelText: languageSettings.cancel,
     ).pick(context);
     if (imageFile != null) {
-      bool willSend = await DialogHelper.showPhotoDialog(
+      bool? willSend = await DialogHelper.showPhotoDialog(
         context,
         imageFile,
         languageSettings.send,
         languageSettings.cancel,
       );
-      if (willSend) {
+      if (willSend != null && willSend) {
         _sendImageMessage(context, imageFile);
       }
     }
   }
 
-  Future<Message> _sendImageMessage(
-      BuildContext context, File imageFile) async {
+  Future<Message?> _sendImageMessage(
+    BuildContext context,
+    File imageFile,
+  ) async {
     // TODO: Open when implemet repository ** Important **
     /*LoadingAlertDialog dialog =
         LoadingAlertDialog(loadingText: Sentences.uploadingImage());
@@ -200,12 +199,12 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   sendMessage(String messageBody) async {
-    Message newLastMessage = await _sendMessage(messageBody);
+    Message? newLastMessage = await _sendMessage(messageBody);
     //contactsViewModel.updateLastMessageCallback(newLastMessage);
     //contactsViewModel.updateMessageStatusCallback(newLastMessage);
   }
 
-  Future<Message> _sendMessage(
+  Future<Message?> _sendMessage(
     String messageBody, {
     String randomIdParam = '',
     int messageType = Message.MESSAGE_TYPE_TEXT,
@@ -214,7 +213,7 @@ class MessagesViewModel with ChangeNotifier {
         state == MessagesViewState.Idle &&
         messageBody.trim().isNotEmpty) {
       Message m = Message(
-        senderId: _currentDatabaseUserId,
+        senderId: _currentDatabaseUserId!,
         receiverId: _contactUser.userId,
         messageBody: messageBody.trim(),
         status: Message.STATUS_WAITING,
@@ -228,7 +227,7 @@ class MessagesViewModel with ChangeNotifier {
       notifyListeners();
       try {
         MessagesDatabaseResult result = await _messagesDatabaseRepository
-            .sendMessage(_currentDatabaseUserId, m);
+            .sendMessage(_currentDatabaseUserId!, m);
         if (result == MessagesDatabaseResult.Success) {
           //m.status = Message.STATUS_SENT;
           _sendNotification(m.messageBody);
@@ -246,8 +245,7 @@ class MessagesViewModel with ChangeNotifier {
 
   _sendNotification(String messageBody) {
     String ntfId = contactUser.notificationId;
-    if (ntfId != null &&
-        ntfId.isNotEmpty &&
+    if (ntfId.isNotEmpty &&
         contactUser.notificationId != firebaseSettings.defaultNotificationId) {
       _notificationRepository.sendNotification(
         "",
@@ -257,12 +255,12 @@ class MessagesViewModel with ChangeNotifier {
     }
   }
 
-  Future<Message> retryToSendMessage(int index, Message message) {
+  Future<void> retryToSendMessage(int index, Message message) async {
     _messages.removeAt(index);
-    sendMessage(message.messageBody);
+    await sendMessage(message.messageBody);
   }
 
-  Message getMessageWithIndex(int index) {
+  Message? getMessageWithIndex(int index) {
     if (hasMessage()) {
       return _messages[index];
     } else {
@@ -271,8 +269,8 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   String getMessageDateText(BuildContext context, int index) {
-    return '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index).dateOfCreated)},' +
-        ' ${DateFormat.Hm(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index).dateOfCreated)}';
+    return '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000))},' +
+        ' ${DateFormat.Hm(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000))}';
   }
 
   /*String date =
@@ -289,7 +287,7 @@ class MessagesViewModel with ChangeNotifier {
 
   int getMessageStatusWithMessageId(String messageId) {
     if (hasMessage()) {
-      Message m = _messages.firstWhere((m) => m.messageId == messageId);
+      Message? m = _messages.firstWhereOrNull((m) => m.messageId == messageId);
       if (m != null) {
         return m.status;
       }
@@ -303,29 +301,31 @@ class MessagesViewModel with ChangeNotifier {
 
   bool isUserSender(int index) {
     bool result = true;
-    Message message = getMessageWithIndex(index);
+    Message? message = getMessageWithIndex(index);
     if (_currentDatabaseUserId != null) {
-      result = message.senderId == _currentDatabaseUserId;
+      result = message?.senderId == _currentDatabaseUserId;
     }
     return result;
   }
 
   void _addListener() {
-    _newMessageSubscription = _messagesDatabaseRepository
-        .addListenerToMessages(_currentDatabaseUserId, _contactUser.userId)
-        .listen((messageList) {
-      if (messageList != null && messageList.isNotEmpty) {
-        Message newMessage = messageList[0];
+    if (_currentDatabaseUserId != null) {
+      _newMessageSubscription = _messagesDatabaseRepository
+          .addListenerToMessages(_currentDatabaseUserId!, _contactUser.userId)
+          .listen((messageList) {
+        if (messageList.isNotEmpty) {
+          Message? newMessage = messageList[0];
 
-        if (newMessage != null) {
-          //if (_listenFirstQuery) {
-          //    _listenFirstQuery = false;
-          // } else {
-          newMessageHandler(newMessage);
-          // }
+          if (newMessage != null) {
+            //if (_listenFirstQuery) {
+            //    _listenFirstQuery = false;
+            // } else {
+            newMessageHandler(newMessage);
+            // }
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   updateMessageStatus(Message message, int status) {

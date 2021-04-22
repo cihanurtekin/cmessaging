@@ -3,9 +3,7 @@ import 'package:example/service/shared_prefs_service.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title}) : super(key: key);
 
-  final String title;
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -15,7 +13,7 @@ class _HomePageState extends State<HomePage> {
   SharedPrefsService _sharedPrefsService = SharedPrefsService();
 
   navigate(BuildContext context) async {
-    String _userId = await _sharedPrefsService.getLoggedInUserId();
+    String? _userId = await _sharedPrefsService.getLoggedInUserId();
     if (_userId != null && _userId.trim().isNotEmpty) {
       Navigator.pushReplacementNamed(context, CustomRouter.ALL_USERS_PAGE);
     } else {
@@ -28,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     navigate(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text("C Messaging"),
       ),
       body: Center(),
     );

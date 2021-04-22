@@ -41,40 +41,22 @@ class LoginViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> signInWithGoogle(BuildContext context) async {
-    state = LoginViewState.Loading;
-    String currentUserId;
-    try {
-      User user = await _authService.signInWithGoogle();
-      if (user != null) {
-        String notificationId = await _notificationService.getNotificationId();
-        if (notificationId != null) {
-          user.notificationId = notificationId;
-        }
-        await _databaseService.addUser(user);
-        await _sharedPrefsService.saveLoggedInUserId(user.userId);
-        currentUserId = await _sharedPrefsService.getLoggedInUserId();
-        _navigateToAllUsersPage(context, currentUserId);
-      }
-    } catch (e) {
-      print("LoginViewModel / signInWithGoogle : ${e.toString()}");
-      //DialogHelper.showErrorDialog(context, e);
-    }
-    state = LoginViewState.Idle;
-    return currentUserId;
-  }
-
-  Future<String> signInWithEmailAndPassword(
-      BuildContext context, String email, String password) async {
+  Future<String?> signInWithEmailAndPassword(
+    BuildContext context,
+    String email,
+    String password,
+  ) async {
     //LoadingAlertDialog dialog = LoadingAlertDialog(loadingText: Sentences.signingIn());
     //DialogHelper.show(context, dialog, barrierDismissible: false);
     state = LoginViewState.Loading;
-    String currentUserId;
+    String? currentUserId;
     try {
-      User user =
-          await _authService.signInWithEmailAndPassword(email, password);
+      User? user = await _authService.signInWithEmailAndPassword(
+        email,
+        password,
+      );
       if (user != null) {
-        String notificationId = await _notificationService.getNotificationId();
+        String? notificationId = await _notificationService.getNotificationId();
 
         await _databaseService
             .updateUser(user.userId, {User.notificationIdKey: notificationId});
@@ -107,7 +89,7 @@ class LoginViewModel with ChangeNotifier {
     }
   }
 
-  _navigateToAllUsersPage(BuildContext context, String currentUserId) {
+  _navigateToAllUsersPage(BuildContext context, String? currentUserId) {
     if (currentUserId != null && currentUserId.trim().isNotEmpty) {
       Navigator.pushReplacementNamed(context, CustomRouter.ALL_USERS_PAGE);
     }

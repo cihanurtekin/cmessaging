@@ -1,5 +1,8 @@
 import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/settings/settings_base.dart';
 
 abstract class CustomUserDatabaseBase {
-  Future<CustomUser> getUser(dynamic userId);
+  void initialize(SettingsBase settings);
+
+  Future<CustomUser?> getUser(dynamic userId);
 }

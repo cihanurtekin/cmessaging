@@ -5,19 +5,19 @@ class User {
   static const String usernameKey = 'username';
   static const String notificationIdKey = 'notificationId';
 
-  String userId;
-  String email;
-  String profilePhotoUrl;
-  String username;
-  String notificationId;
+  late String userId;
+  late String email;
+  late String profilePhotoUrl;
+  late String username;
+  late String notificationId;
 
   User(
-      this.userId,
-      this.email, {
-        this.profilePhotoUrl = '',
-        this.username = '',
-        this.notificationId = '',
-      });
+    this.userId,
+    this.email, {
+    this.profilePhotoUrl = '',
+    this.username = '',
+    this.notificationId = '',
+  });
 
   Map<String, dynamic> toMap() {
     return {
@@ -32,8 +32,8 @@ class User {
   User.fromMap(String userId, Map<String, dynamic> map) {
     this.userId = userId;
     this.email = map[emailKey];
-    this.profilePhotoUrl = map[profilePhotoUrlKey];
-    this.username = map[usernameKey];
-    this.notificationId = map[notificationIdKey];
+    this.profilePhotoUrl = map[profilePhotoUrlKey] ?? "";
+    this.username = map[usernameKey] ?? "";
+    this.notificationId = map[notificationIdKey] ?? "";
   }
 }

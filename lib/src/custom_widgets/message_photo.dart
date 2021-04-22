@@ -6,8 +6,8 @@ class MessagePhoto extends StatelessWidget {
   final String photo;
 
   MessagePhoto({
-    @required this.photo,
-    @required this.placeholderImagePath,
+    required this.photo,
+    required this.placeholderImagePath,
   });
 
   @override

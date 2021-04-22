@@ -43,9 +43,9 @@ class Shimmer extends StatefulWidget {
   final int loop;
 
   Shimmer({
-    Key key,
-    @required this.child,
-    @required this.gradient,
+    Key? key,
+    required this.child,
+    required this.gradient,
     this.direction = ShimmerDirection.ltr,
     this.period = const Duration(milliseconds: 1500),
     this.loop = 0,
@@ -57,10 +57,10 @@ class Shimmer extends StatefulWidget {
   /// `highlightColor`.
   ///
   Shimmer.fromColors(
-      {Key key,
-      @required this.child,
-      @required Color baseColor,
-      @required Color highlightColor,
+      {Key? key,
+      required this.child,
+      required Color baseColor,
+      required Color highlightColor,
       this.period = const Duration(milliseconds: 1500),
       this.direction = ShimmerDirection.ltr,
       this.loop = 0})
@@ -98,8 +98,8 @@ class Shimmer extends StatefulWidget {
 }
 
 class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  int _count;
+  late AnimationController _controller;
+  int _count = 0;
 
   @override
   void initState() {
@@ -144,7 +144,11 @@ class _Shimmer extends SingleChildRenderObjectWidget {
   final ShimmerDirection direction;
   final Gradient gradient;
 
-  _Shimmer({Widget child, this.percent, this.direction, this.gradient})
+  _Shimmer(
+      {Widget? child,
+      required this.percent,
+      required this.direction,
+      required this.gradient})
       : super(child: child);
 
   @override
@@ -165,7 +169,7 @@ class _ShimmerFilter extends RenderProxyBox {
   final Gradient _gradient;
   final ShimmerDirection _direction;
   double _percent;
-  Rect _rect;
+  Rect? _rect;
 
   _ShimmerFilter(this._percent, this._direction, this._gradient)
       : _gradientPaint = Paint()..blendMode = BlendMode.srcIn;
@@ -185,8 +189,8 @@ class _ShimmerFilter extends RenderProxyBox {
     if (child != null) {
       assert(needsCompositing);
 
-      final width = child.size.width;
-      final height = child.size.height;
+      final width = child!.size.width;
+      final height = child!.size.height;
       Rect rect;
       double dx, dy;
       if (_direction == ShimmerDirection.rtl) {
@@ -211,8 +215,8 @@ class _ShimmerFilter extends RenderProxyBox {
         _rect = rect;
       }
 
-      context.canvas.saveLayer(offset & child.size, _clearPaint);
-      context.paintChild(child, offset);
+      context.canvas.saveLayer(offset & child!.size, _clearPaint);
+      context.paintChild(child!, offset);
       context.canvas.translate(dx, dy);
       context.canvas.drawRect(rect, _gradientPaint);
       context.canvas.restore();

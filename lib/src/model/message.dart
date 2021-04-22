@@ -24,18 +24,18 @@ class Message {
   static const String messageTypeKey = 'messageType';
   static const String randomIdKey = 'randomId';
 
-  String messageId;
-  String contactId;
-  String senderId;
-  String receiverId;
-  String messageBody;
-  DateTime dateOfCreated;
-  int deleted;
-  int status;
-  int messageType;
-  String randomId = Uuid().v4();
+  late String messageId;
+  late String contactId;
+  late String senderId;
+  late String receiverId;
+  late String messageBody;
+  late DateTime dateOfCreated;
+  late int deleted;
+  late int status;
+  late int messageType;
+  late String randomId = Uuid().v4();
 
-  CustomUser contactUser;
+  CustomUser? contactUser;
 
   Message({
     this.messageId = '',
@@ -43,7 +43,7 @@ class Message {
     this.senderId = '',
     this.receiverId = '',
     this.messageBody = '',
-    this.dateOfCreated,
+    required this.dateOfCreated,
     this.deleted = 0,
     this.status = STATUS_WAITING,
     this.messageType = MESSAGE_TYPE_TEXT,
@@ -94,6 +94,10 @@ class Message {
 
   @override
   String toString() {
-    return 'Message{messageId: $messageId, contactId: $contactId, senderId: $senderId, receiverId: $receiverId, messageBody: $messageBody, dateOfCreated: $dateOfCreated, deleted: $deleted, status: $status, messageType: $messageType, randomId: $randomId, contactUser: $contactUser}';
+    return 'Message{messageId: $messageId, contactId: $contactId, '
+        'senderId: $senderId, receiverId: $receiverId, '
+        'messageBody: $messageBody, dateOfCreated: $dateOfCreated, '
+        'deleted: $deleted, status: $status, messageType: $messageType, '
+        'randomId: $randomId, contactUser: $contactUser}';
   }
 }

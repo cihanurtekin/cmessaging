@@ -6,14 +6,14 @@ class PhotoDialog extends StatelessWidget{
   final File imageFile;
   final String sendButtonText;
   final String cancelButtonText;
-  final IconData icon;
+  final IconData? icon;
   final String titleText;
   final double maxImageWidth;
 
   PhotoDialog({
-    @required this.imageFile,
-    @required this.sendButtonText,
-    @required this.cancelButtonText,
+    required this.imageFile,
+    required this.sendButtonText,
+    required this.cancelButtonText,
     this.icon,
     this.titleText = '',
     this.maxImageWidth = 400.0,
@@ -38,13 +38,13 @@ class PhotoDialog extends StatelessWidget{
         child: Image.file(imageFile),
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton(
           child: Text(cancelButtonText),
           onPressed: () {
             Navigator.pop(context, false);
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text(sendButtonText),
           onPressed: () {
             Navigator.pop(context, true);

@@ -25,6 +25,7 @@ class Sentences{
   static String nameSurnameLong(int max)=> "Name surname cannot be longer than $max characters";
   static String passwordShort(int min)=> "Password cannot be shorter than $min characters";
   static String passwordLong(int max)=> "Password cannot be longer than $max characters";
+  static String phoneAsLongAs(int size)=> "Phone number must contain $size characters";
   static String phoneShort(int min)=> "Phone number cannot be shorter than $min characters";
   static String phoneLong(int max)=> "Phone number cannot be longer than $max characters";
   static String phoneShouldBeNumeric()=> "Phone number must be numeric";

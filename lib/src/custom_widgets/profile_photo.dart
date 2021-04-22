@@ -10,10 +10,10 @@ class ProfilePhoto extends StatelessWidget {
   final Color backgroundColor;
 
   ProfilePhoto({
-    @required this.photo,
-    @required this.placeholderImagePath,
-    @required this.radius,
-    @required this.backgroundColor,
+    required this.photo,
+    required this.placeholderImagePath,
+    required this.radius,
+    required this.backgroundColor,
   });
 
   @override

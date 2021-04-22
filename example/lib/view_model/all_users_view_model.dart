@@ -6,7 +6,7 @@ import 'package:c_messaging/c_messaging.dart';
 enum AllUsersViewState { Idle, Loading }
 
 class AllUsersViewModel with ChangeNotifier {
-  FirebaseFirestore _firestore;
+  late FirebaseFirestore _firestore;
 
   AllUsersViewState _state = AllUsersViewState.Loading;
 
@@ -18,7 +18,7 @@ class AllUsersViewModel with ChangeNotifier {
 
   AllUsersViewModel() {
     _firestore = FirebaseFirestore.instance;
-    _firestore.settings = Settings(persistenceEnabled:  false);
+    _firestore.settings = Settings(persistenceEnabled: false);
     getAllUsers();
   }
 
@@ -31,14 +31,14 @@ class AllUsersViewModel with ChangeNotifier {
     state = AllUsersViewState.Loading;
 
     try {
-      QuerySnapshot qs = await _firestore
-          .collection("users")
-          .limit(10)
-          .get();
+      QuerySnapshot qs = await _firestore.collection("users").limit(10).get();
       for (DocumentSnapshot doc in qs.docs) {
         try {
-          User u = User.fromMap(doc.id, doc.data());
-          _users.add(u);
+          Map<String, dynamic>? docData = doc.data();
+          if (docData != null) {
+            User u = User.fromMap(doc.id, docData);
+            _users.add(u);
+          }
         } catch (e) {
           print("AllUsersViewModel/ getAllUsers / for loop : ${e.toString()}");
         }
@@ -50,7 +50,7 @@ class AllUsersViewModel with ChangeNotifier {
     }
   }
 
-  openContactsPage(BuildContext context){
+  openContactsPage(BuildContext context) {
     CMessaging().pushContactsPage(context);
   }
 }

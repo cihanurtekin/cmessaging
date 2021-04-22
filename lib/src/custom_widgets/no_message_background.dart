@@ -7,10 +7,10 @@ class NoMessageBackground extends StatelessWidget {
   final double textSize;
 
   NoMessageBackground({
-    @required this.assetImagePath,
-    @required this.textContent,
-    @required this.imageWidth,
-    @required this.textSize,
+    required this.assetImagePath,
+    required this.textContent,
+    required this.imageWidth,
+    required this.textSize,
   });
 
   @override

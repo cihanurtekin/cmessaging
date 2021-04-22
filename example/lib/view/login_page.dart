@@ -45,8 +45,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 _buildForgotPasswordField(),
                 SizedBox(height: _spacing),
-                _buildGoogleSignInButton(context),
-                SizedBox(height: _spacing),
                 _buildToRegisterPageButton(context),
               ],
             ),
@@ -65,9 +63,12 @@ class _LoginPageState extends State<LoginPage> {
         decoration: InputDecoration(
           hintText: Sentences.email(),
         ),
-        validator: (String value) =>
-            Validator.validateEmail(context, value.trim()),
-        onSaved: (String value) => _email = value.trim(),
+        validator: Validator.validateEmail,
+        onSaved: (String? value) {
+          if (value != null) {
+            _email = value.trim();
+          }
+        },
       ),
     );
   }
@@ -91,9 +92,12 @@ class _LoginPageState extends State<LoginPage> {
               },
             ),
           ),
-          validator: (String value) =>
-              Validator.validatePassword(context, value.trim()),
-          onSaved: (String value) => _password = value.trim(),
+          validator: Validator.validatePassword,
+          onSaved: (String? value) {
+            if (value != null) {
+              _password = value.trim();
+            }
+          },
         ),
       ),
     );
@@ -103,14 +107,19 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       width: double.infinity,
       child: Consumer<LoginViewModel>(
-        builder: (ctx, viewModel, child) => RaisedButton(
+        builder: (ctx, viewModel, child) => ElevatedButton(
           child: Text(
             Sentences.login(),
           ),
           onPressed: () {
-            if (_loginForm.currentState.validate()) {
-              _loginForm.currentState.save();
-              viewModel.signInWithEmailAndPassword(context, _email, _password);
+            FormState? formState = _loginForm.currentState;
+            if (formState != null && formState.validate()) {
+              formState.save();
+              viewModel.signInWithEmailAndPassword(
+                context,
+                _email,
+                _password,
+              );
             } else {
               viewModel.autoValidateForm = true;
             }
@@ -122,10 +131,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildForgotPasswordField() {
     return Consumer<LoginViewModel>(
-      builder: (context, viewModel, child) => FlatButton(
+      builder: (context, viewModel, child) => TextButton(
         child: Text(Sentences.forgotPassword()),
         onPressed: () {
-          _showPasswordResetDialog(context).then((value) {
+          _showPasswordResetDialog(context).then((String? value) {
             if (value != null && value.trim().isNotEmpty) {
               viewModel.sendPasswordResetEmail(context, value);
             }
@@ -135,51 +144,22 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildGoogleSignInButton(BuildContext context) {
-    const double iconWidth = 24;
-    return Container(
-      width: double.infinity,
-      child: Consumer<LoginViewModel>(
-        builder: (context, viewModel, child) => RaisedButton(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Image.asset(
-                'assets/images/google_logo.png',
-                width: iconWidth,
-              ),
-              Text(
-                Sentences.singInWithGoogle(),
-              ),
-              SizedBox(width: iconWidth),
-            ],
-          ),
-          //color: Color.fromARGB(255, 211, 72, 54),
-          onPressed: () {
-            viewModel.signInWithGoogle(context);
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildToRegisterPageButton(BuildContext context) {
     return Container(
       width: double.infinity,
       child: Consumer<LoginViewModel>(
-        builder: (context, viewModel, child) =>RaisedButton(
-          child: Text(
-            Sentences.registerIfNoAccount(),
-          ),
-          onPressed: () {
-            viewModel.navigateToRegisterPage(context);
-          }
-        ),
+        builder: (context, viewModel, child) => ElevatedButton(
+            child: Text(
+              Sentences.registerIfNoAccount(),
+            ),
+            onPressed: () {
+              viewModel.navigateToRegisterPage(context);
+            }),
       ),
     );
   }
 
-  Future<String> _showPasswordResetDialog(BuildContext context) {
+  Future<String?> _showPasswordResetDialog(BuildContext context) {
     /*return DialogHelper.show<String>(
         context,
         PasswordResetDialog(
@@ -188,5 +168,6 @@ class _LoginPageState extends State<LoginPage> {
           acceptButtonText: Sentences.accept(),
           cancelButtonText: Sentences.cancel(),
         ));*/
+    return Future.value();
   }
 }

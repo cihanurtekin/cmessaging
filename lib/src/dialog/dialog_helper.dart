@@ -5,14 +5,18 @@ import 'package:c_messaging/src/dialog/photo_dialog.dart';
 import 'package:flutter/material.dart';
 
 class DialogHelper {
-  static Future<T> show<T>(BuildContext context, Widget dialog,
-      {bool barrierDismissible = true}) {
+  static Future<T?> show<T>(
+    BuildContext context,
+    Widget dialog, {
+    bool barrierDismissible = true,
+  }) {
     return showDialog<T>(
-        context: context,
-        barrierDismissible: barrierDismissible,
-        builder: (context) {
-          return dialog;
-        });
+      context: context,
+      barrierDismissible: barrierDismissible,
+      builder: (context) {
+        return dialog;
+      },
+    );
   }
 
   /*static void showLoadingDialog(BuildContext context, String loadingText,
@@ -23,7 +27,7 @@ class DialogHelper {
     show(context, dialog, barrierDismissible: barrierDismissible);
   }*/
 
-  static Future<bool> showChoiceDialog(
+  static Future<bool?> showChoiceDialog(
       BuildContext context,
       IconData icon,
       String titleText,
@@ -40,16 +44,15 @@ class DialogHelper {
     return show<bool>(context, dialog);
   }
 
-
-  static Future<bool> showPhotoDialog(
-      BuildContext context,
-      File file,
-      String sendButtonText,
-      String cancelButtonText, {
-        IconData icon,
-        String titleText = '',
-        double maxImageWidth = 400.0,
-      }) {
+  static Future<bool?> showPhotoDialog(
+    BuildContext context,
+    File file,
+    String sendButtonText,
+    String cancelButtonText, {
+    IconData? icon,
+    String titleText = '',
+    double maxImageWidth = 400.0,
+  }) {
     PhotoDialog dialog = PhotoDialog(
         imageFile: file,
         sendButtonText: sendButtonText,
@@ -60,7 +63,7 @@ class DialogHelper {
     return show<bool>(context, dialog);
   }
 
-  /*
+/*
   static Future<bool> showDeleteMessageDialog(BuildContext context) {
     return showChoiceDialog(
       context,
@@ -84,7 +87,7 @@ class DialogHelper {
   }
    */
 
-  /*
+/*
   static void showSuccessDialog(BuildContext context, String successText) {
     ResultAlertDialog dialog = ResultAlertDialog(
       result: Result.Success,

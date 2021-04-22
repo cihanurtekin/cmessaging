@@ -13,11 +13,10 @@ class MessagesPage extends StatefulWidget {
 class _MessagesPageState extends State<MessagesPage> {
   TextEditingController _messageTextFieldController = TextEditingController();
 
-  ScrollController _controller;
+  ScrollController _controller = ScrollController();
 
   @override
   void initState() {
-    _controller = ScrollController();
     _controller.addListener(_scrollListener);
     super.initState();
   }
@@ -158,62 +157,67 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Widget _buildMessagesListTile(BuildContext context, int index) {
     return Consumer<MessagesViewModel>(builder: (context, viewModel, child) {
-      Message message = viewModel.getMessageWithIndex(index);
+      Message? message = viewModel.getMessageWithIndex(index);
       bool isUserSender = viewModel.isUserSender(index);
-      return ListTile(
-        contentPadding: EdgeInsets.only(
-            left: isUserSender
-                ? viewModel.settings.listTileMaxPadding
-                : viewModel.settings.listTileMinPadding,
-            right: isUserSender
-                ? viewModel.settings.listTileMinPadding
-                : viewModel.settings.listTileMaxPadding),
-        title: Card(
-          clipBehavior: Clip.antiAliasWithSaveLayer,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                  viewModel.settings.listTileCornerRadius)),
-          child: Stack(
-            children: <Widget>[
-              Container(
-                padding: EdgeInsets.all(viewModel.settings.messageTextPadding),
-                color: isUserSender
-                    ? viewModel.settings.senderMessageBackgroundColor
-                    : viewModel.settings.receiverMessageBackgroundColor,
-                child: Column(
+      return message != null
+          ? ListTile(
+              contentPadding: EdgeInsets.only(
+                  left: isUserSender
+                      ? viewModel.settings.listTileMaxPadding
+                      : viewModel.settings.listTileMinPadding,
+                  right: isUserSender
+                      ? viewModel.settings.listTileMinPadding
+                      : viewModel.settings.listTileMaxPadding),
+              title: Card(
+                clipBehavior: Clip.antiAliasWithSaveLayer,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        viewModel.settings.listTileCornerRadius)),
+                child: Stack(
                   children: <Widget>[
-                    Align(
-                      alignment:
-                          isUserSender ? Alignment.topRight : Alignment.topLeft,
-                      child: message.messageType == Message.MESSAGE_TYPE_IMAGE
-                          ? MessagePhoto(
-                              photo: message.messageBody,
-                              placeholderImagePath: viewModel
-                                  .settings.messagePhotoPlaceholderPath,
-                            )
-                          : Text(
-                              message.messageBody,
-                              style: TextStyle(
-                                  fontSize:
-                                      viewModel.settings.messageBodyTextSize),
-                            ),
+                    Container(
+                      padding:
+                          EdgeInsets.all(viewModel.settings.messageTextPadding),
+                      color: isUserSender
+                          ? viewModel.settings.senderMessageBackgroundColor
+                          : viewModel.settings.receiverMessageBackgroundColor,
+                      child: Column(
+                        children: <Widget>[
+                          Align(
+                            alignment: isUserSender
+                                ? Alignment.topRight
+                                : Alignment.topLeft,
+                            child: message.messageType ==
+                                    Message.MESSAGE_TYPE_IMAGE
+                                ? MessagePhoto(
+                                    photo: message.messageBody,
+                                    placeholderImagePath: viewModel
+                                        .settings.messagePhotoPlaceholderPath,
+                                  )
+                                : Text(
+                                    message.messageBody,
+                                    style: TextStyle(
+                                        fontSize: viewModel
+                                            .settings.messageBodyTextSize),
+                                  ),
+                          ),
+                          SizedBox(height: 4.0),
+                          _buildDateRow(index),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 4.0),
-                    _buildDateRow(index),
+                    if (message.status == Message.STATUS_ERROR)
+                      IconButton(
+                          icon: Icon(Icons.refresh),
+                          onPressed: () {
+                            viewModel.retryToSendMessage(index, message);
+                          }),
                   ],
                 ),
               ),
-              if (message.status == Message.STATUS_ERROR)
-                IconButton(
-                    icon: Icon(Icons.refresh),
-                    onPressed: () {
-                      viewModel.retryToSendMessage(index, message);
-                    }),
-            ],
-          ),
-        ),
-        //onLongPress: () => _onListTileLongPressed(context, index),
-      );
+              //onLongPress: () => _onListTileLongPressed(context, index),
+            )
+          : Container();
     });
   }
 
@@ -221,48 +225,54 @@ class _MessagesPageState extends State<MessagesPage> {
     return Consumer<MessagesViewModel>(
       builder: (context, viewModel, child) {
         Color iconColor = Colors.black45;
-        Message message = viewModel.getMessageWithIndex(index);
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            Text(
-              viewModel.getMessageDateText(context, index),
-              style: TextStyle(
-                  color: Colors.black45,
-                  fontSize: viewModel.settings.messageDateTextSize),
-            ),
-            if (viewModel.isUserSender(index))
-              Container(
-                margin: EdgeInsets.only(left: 2.0),
-                child: message.status == Message.STATUS_WAITING
-                    ? SizedBox(
-                        width: viewModel.settings.messageStatusIconsSize,
-                        height: viewModel.settings.messageStatusIconsSize,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.0,
-                          valueColor: AlwaysStoppedAnimation<Color>(iconColor),
-                        ),
-                      )
-                    : message.status == Message.STATUS_SENT
-                        ? Icon(
-                            Icons.check,
-                            size: viewModel.settings.messageStatusIconsSize,
-                            color: iconColor,
-                          )
-                        : message.status == Message.STATUS_ERROR
-                            ? Icon(
-                                Icons.clear,
-                                size: viewModel.settings.messageStatusIconsSize,
-                                color: Colors.red,
-                              )
-                            : Icon(
-                                Icons.access_time,
-                                size: viewModel.settings.messageStatusIconsSize,
-                                color: iconColor,
+        Message? message = viewModel.getMessageWithIndex(index);
+        return message != null
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    viewModel.getMessageDateText(context, index),
+                    style: TextStyle(
+                        color: Colors.black45,
+                        fontSize: viewModel.settings.messageDateTextSize),
+                  ),
+                  if (viewModel.isUserSender(index))
+                    Container(
+                      margin: EdgeInsets.only(left: 2.0),
+                      child: message.status == Message.STATUS_WAITING
+                          ? SizedBox(
+                              width: viewModel.settings.messageStatusIconsSize,
+                              height: viewModel.settings.messageStatusIconsSize,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.0,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(iconColor),
                               ),
-              ),
-          ],
-        );
+                            )
+                          : message.status == Message.STATUS_SENT
+                              ? Icon(
+                                  Icons.check,
+                                  size:
+                                      viewModel.settings.messageStatusIconsSize,
+                                  color: iconColor,
+                                )
+                              : message.status == Message.STATUS_ERROR
+                                  ? Icon(
+                                      Icons.clear,
+                                      size: viewModel
+                                          .settings.messageStatusIconsSize,
+                                      color: Colors.red,
+                                    )
+                                  : Icon(
+                                      Icons.access_time,
+                                      size: viewModel
+                                          .settings.messageStatusIconsSize,
+                                      color: iconColor,
+                                    ),
+                    ),
+                ],
+              )
+            : Container();
       },
     );
   }

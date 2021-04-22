@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(title: "C Messaging"),
+      home: HomePage(),
       routes: CustomRouter.getRoutes(),
       //localizationsDelegates: [
       //  GlobalMaterialLocalizations.delegate,

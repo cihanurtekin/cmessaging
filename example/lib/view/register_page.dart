@@ -16,7 +16,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   String _nameSurname = '';
   String _email = '';
-  String _phone = '';
   String _password = '';
 
   @override
@@ -70,9 +69,12 @@ class _RegisterPageState extends State<RegisterPage> {
         decoration: InputDecoration(
           hintText: Sentences.nameSurname(),
         ),
-        validator: (String value) =>
-            Validator.validateNameSurname(context, value.trim()),
-        onSaved: (String value) => _nameSurname = value.trim(),
+        validator: Validator.validateNameSurname,
+        onSaved: (String? value) {
+          if (value != null) {
+            _nameSurname = value.trim();
+          }
+        },
       ),
     );
   }
@@ -86,9 +88,12 @@ class _RegisterPageState extends State<RegisterPage> {
         decoration: InputDecoration(
           hintText: Sentences.email(),
         ),
-        validator: (String value) =>
-            Validator.validateEmail(context, value.trim()),
-        onSaved: (String value) => _email = value.trim(),
+        validator: Validator.validateEmail,
+        onSaved: (String? value) {
+          if (value != null) {
+            _email = value.trim();
+          }
+        },
       ),
     );
   }
@@ -113,9 +118,12 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           onChanged: (value) => _password = value.trim(),
-          validator: (String value) =>
-              Validator.validatePassword(context, value.trim()),
-          onSaved: (String value) => _password = value.trim(),
+          validator: Validator.validatePassword,
+          onSaved: (String? value) {
+            if (value != null) {
+              _password = value.trim();
+            }
+          },
         ),
       ),
     );
@@ -140,8 +148,10 @@ class _RegisterPageState extends State<RegisterPage> {
               },
             ),
           ),
-          validator: (String value) =>
-              Validator.validatePasswordAgain(context, _password, value.trim()),
+          validator: (String? value) => Validator.validatePasswordAgain(
+            _password,
+            value,
+          ),
         ),
       ),
     );
@@ -151,15 +161,20 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       width: double.infinity,
       child: Consumer<RegisterViewModel>(
-        builder: (ctx, viewModel, child) => RaisedButton(
+        builder: (ctx, viewModel, child) => ElevatedButton(
           child: Text(
             Sentences.register(),
           ),
           onPressed: () {
-            if (_registerForm.currentState.validate()) {
-              _registerForm.currentState.save();
+            FormState? formState = _registerForm.currentState;
+            if (formState != null && formState.validate()) {
+              formState.save();
               viewModel.signUpWithEmailAndPassword(
-                  context, _email, _password, _nameSurname);
+                context,
+                _email,
+                _password,
+                _nameSurname,
+              );
             } else {
               viewModel.formAutoValidateMode = AutovalidateMode.always;
             }
@@ -173,7 +188,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       width: double.infinity,
       child: Consumer<RegisterViewModel>(
-        builder: (ctx, viewModel, child) => RaisedButton(
+        builder: (ctx, viewModel, child) => ElevatedButton(
           child: Text(
             Sentences.loginIfHaveAccount(),
           ),

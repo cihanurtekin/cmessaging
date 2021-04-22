@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ChoiceDialog extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String titleText;
   final String contentText;
   final String acceptButtonText;
@@ -11,8 +11,8 @@ class ChoiceDialog extends StatelessWidget {
     this.icon,
     this.titleText = '',
     this.contentText = '',
-    @required this.acceptButtonText,
-    @required this.cancelButtonText,
+    required this.acceptButtonText,
+    required this.cancelButtonText,
   });
 
   @override
@@ -35,13 +35,13 @@ class ChoiceDialog extends StatelessWidget {
       )
           : null,
       actions: <Widget>[
-        FlatButton(
+        TextButton(
           child: Text(cancelButtonText),
           onPressed: () {
             Navigator.pop(context, false);
           },
         ),
-        FlatButton(
+        TextButton(
           child: Text(acceptButtonText),
           onPressed: () {
             Navigator.pop(context, true);

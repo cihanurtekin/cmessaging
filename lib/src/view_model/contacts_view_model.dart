@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:c_messaging/src/base/messages_database_base.dart';
+import 'package:c_messaging/src/helper/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/custom_user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/repository/custom_user_database_repository.dart';
 import 'package:c_messaging/src/repository/messages_database_repository.dart';
-import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
@@ -16,6 +16,7 @@ import 'package:c_messaging/src/view_model/messages_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:collection/collection.dart';
 
 enum ContactsViewState {
   Idle,
@@ -35,7 +36,7 @@ class ContactsViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  StreamSubscription _contactUpdateSubscription;
+  StreamSubscription? _contactUpdateSubscription;
   bool _isFirstQuery = true;
 
   List<Message> _messages = [];
@@ -44,31 +45,26 @@ class ContactsViewModel with ChangeNotifier {
 
   dynamic _lastMessageToStartAfter;
 
-  String _currentDatabaseUserId;
+  String? _currentDatabaseUserId;
 
   final ContactsPageSettings settings;
   final MessagesPageSettings messagesPageSettings;
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  MessagesDatabaseRepository _messagesDatabaseRepository;
-  CustomUserDatabaseRepository _customUserDatabaseRepository;
-  NotificationRepository _notificationRepository;
+  MessagesDatabaseRepository _messagesDatabaseRepository =
+      locator<MessagesDatabaseRepository>();
+  CustomUserDatabaseRepository _customUserDatabaseRepository =
+      locator<CustomUserDatabaseRepository>();
 
   ContactsViewModel({
-    @required String userId,
-    @required this.settings,
-    @required this.messagesPageSettings,
-    @required this.firebaseSettings,
-    @required this.languageSettings,
-    @required MessagesDatabaseRepository messagesDatabaseRepository,
-    @required CustomUserDatabaseRepository customUserDatabaseRepository,
-    @required NotificationRepository notificationRepository,
+    required String userId,
+    required this.settings,
+    required this.messagesPageSettings,
+    required this.firebaseSettings,
+    required this.languageSettings,
   }) {
     _currentDatabaseUserId = userId;
-    _messagesDatabaseRepository = messagesDatabaseRepository;
-    _customUserDatabaseRepository = customUserDatabaseRepository;
-    _notificationRepository = notificationRepository;
     _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
@@ -76,9 +72,7 @@ class ContactsViewModel with ChangeNotifier {
 
   @override
   dispose() {
-    if (_contactUpdateSubscription != null) {
-      _contactUpdateSubscription.cancel();
-    }
+    _contactUpdateSubscription?.cancel();
     super.dispose();
   }
 
@@ -105,7 +99,7 @@ class ContactsViewModel with ChangeNotifier {
       try {
         messageListAndLastMessage = await _messagesDatabaseRepository
             .getMessagesAndLastMessageWithPagination(
-          _currentDatabaseUserId,
+          _currentDatabaseUserId!,
           '',
           ListType.Contacts,
           _lastMessageToStartAfter,
@@ -113,8 +107,9 @@ class ContactsViewModel with ChangeNotifier {
         );
 
         for (Message m in messageListAndLastMessage[0]) {
-          CustomUser customUser =
-              await _customUserDatabaseRepository.getUser(m.contactId);
+          CustomUser? customUser = await _customUserDatabaseRepository.getUser(
+            m.contactId,
+          );
           m.contactUser = customUser;
         }
 
@@ -144,10 +139,10 @@ class ContactsViewModel with ChangeNotifier {
   Future<MessagesDatabaseResult> deleteMessage(String currentUserId,
       Message message, bool isLastMessage, Message newLastMessage) {
     // TODO: implement deleteMessage
-    return null;
+    return Future.value(MessagesDatabaseResult.Error);
   }
 
-  Message getMessageWithIndex(int index) {
+  Message? getMessageWithIndex(int index) {
     if (hasMessage()) {
       return messages[index];
     } else {
@@ -157,18 +152,21 @@ class ContactsViewModel with ChangeNotifier {
 
   String getMessageDateText(BuildContext context, int index) {
     return DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
-        .format(getMessageWithIndex(index).dateOfCreated);
+        .format(
+      getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000),
+    );
   }
 
   Future<MessagesDatabaseResult> deleteAllMessagesOfContactWithIndex(
-      int index) async {
+    int index,
+  ) async {
     MessagesDatabaseResult result = MessagesDatabaseResult.Error;
-    Message messageToDelete = getMessageWithIndex(index);
-    if (_currentDatabaseUserId != null) {
+    Message? messageToDelete = getMessageWithIndex(index);
+    if (_currentDatabaseUserId != null && messageToDelete != null) {
       state = ContactsViewState.Deleting;
       try {
         result = await _messagesDatabaseRepository.deleteAllMessagesOfContact(
-            _currentDatabaseUserId, messageToDelete.contactId);
+            _currentDatabaseUserId!, messageToDelete.contactId);
       } catch (e) {
         print(
             "ContactsViewState / deleteAllMessagesOfContact : ${e.toString()}");
@@ -181,10 +179,10 @@ class ContactsViewModel with ChangeNotifier {
   void _addListener() async {
     if (_currentDatabaseUserId != null) {
       _contactUpdateSubscription = _messagesDatabaseRepository
-          .addListenerToContacts(_currentDatabaseUserId, "")
+          .addListenerToContacts(_currentDatabaseUserId!, "")
           .listen((messageList) {
-        if (messageList != null && messageList.isNotEmpty) {
-          Message newMessage = messageList[0];
+        if (messageList.isNotEmpty) {
+          Message? newMessage = messageList[0];
 
           if (newMessage != null) {
             newMessageHandler(newMessage);
@@ -202,7 +200,7 @@ class ContactsViewModel with ChangeNotifier {
       Message messageToAdd = newMessage;
       for (Message m in _messages) {
         if (m.contactId == messageToAdd.contactId) {
-          CustomUser contactUser = m.contactUser;
+          CustomUser? contactUser = m.contactUser;
           messageToAdd.contactUser = contactUser;
           contactIdToRemove = m.contactId;
           break;
@@ -228,8 +226,9 @@ class ContactsViewModel with ChangeNotifier {
   }
 
   updateMessageStatusCallback(Message mess) {
-    Message message = messages.firstWhere((m) => m.contactId == mess.contactId,
-        orElse: () => null);
+    Message? message = messages.firstWhereOrNull(
+      (m) => m.contactId == mess.contactId,
+    );
     if (message != null) {
       message.status = mess.status;
       notifyListeners();
@@ -237,23 +236,26 @@ class ContactsViewModel with ChangeNotifier {
   }
 
   openMessagesPage(BuildContext context, int index) {
-    Message message = getMessageWithIndex(index);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => ChangeNotifierProvider(
-          create: (context) => MessagesViewModel(
-            userId: _currentDatabaseUserId,
-            contactUser: message.contactUser,
-            settings: messagesPageSettings,
-            firebaseSettings: firebaseSettings,
-            languageSettings: languageSettings,
-            messagesDatabaseRepository: _messagesDatabaseRepository,
-            notificationRepository: _notificationRepository,
+    Message? message = getMessageWithIndex(index);
+    if (_currentDatabaseUserId != null && message != null) {
+      CustomUser? contactUser = message.contactUser;
+      if (contactUser != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => ChangeNotifierProvider(
+              create: (context) => MessagesViewModel(
+                userId: _currentDatabaseUserId!,
+                contactUser: contactUser,
+                settings: messagesPageSettings,
+                firebaseSettings: firebaseSettings,
+                languageSettings: languageSettings,
+              ),
+              child: MessagesPage(),
+            ),
           ),
-          child: MessagesPage(),
-        ),
-      ),
-    );
+        );
+      }
+    }
   }
 }
