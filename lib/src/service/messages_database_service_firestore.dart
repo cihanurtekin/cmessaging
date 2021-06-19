@@ -164,10 +164,11 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
     lastMessageToStartAfter,
     int paginationLimit,
   ) async {
-    DocumentSnapshot? lastMessageDocument;
+    DocumentSnapshot<Map<String, dynamic>>? lastMessageDocument;
     if (lastMessageToStartAfter != null) {
       try {
-        lastMessageDocument = lastMessageToStartAfter as DocumentSnapshot;
+        lastMessageDocument =
+            lastMessageToStartAfter as DocumentSnapshot<Map<String, dynamic>>;
       } catch (e) {
         return [];
       }
@@ -176,7 +177,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
     List<Message> messages = [];
     //int paginationLimit = paginationLimitContacts;
 
-    CollectionReference colRef = _firestore
+    CollectionReference<Map<String, dynamic>> colRef = _firestore
         .collection(_firebaseSettings.messagesCollectionName)
         .doc(currentUserId)
         .collection(_firebaseSettings.contactsCollectionName);
@@ -188,7 +189,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
       //paginationLimit = paginationLimitMessages;
     }
 
-    Query query = colRef
+    Query<Map<String, dynamic>> query = colRef
         .where(Message.deletedKey, isEqualTo: 0)
         .orderBy(Message.dateOfCreatedKey, descending: true)
         .limit(paginationLimit);
@@ -197,10 +198,10 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
       query = query.startAfterDocument(lastMessageDocument);
     }
 
-    QuerySnapshot qs = await query.get();
+    QuerySnapshot<Map<String, dynamic>> qs = await query.get();
 
     if (qs.docs.length > 0) {
-      for (DocumentSnapshot doc in qs.docs) {
+      for (DocumentSnapshot<Map<String, dynamic>> doc in qs.docs) {
         try {
           Message? m = getMessageFromDocumentSnapshot(doc);
           if (m != null) {
@@ -219,13 +220,13 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
     return [List<Message>.from(messages), lastMessageDocument];
   }
 
-  Message? getMessageFromDocumentSnapshot(DocumentSnapshot doc) {
+  Message? getMessageFromDocumentSnapshot(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     Map<String, dynamic>? messageMap = doc.data();
     if (messageMap != null) {
       messageMap[Message.dateOfCreatedKey] = doc.metadata.hasPendingWrites
           ? DateTime.now()
-          : messageMap[Message.dateOfCreatedKey] =
-              (messageMap[Message.dateOfCreatedKey] as Timestamp).toDate();
+          : (messageMap[Message.dateOfCreatedKey] as Timestamp).toDate();
 
       Message m = Message.fromMap(doc.id, messageMap);
       return m;
@@ -273,7 +274,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
   @override
   Stream<List<Message?>> addListenerToMessages(
       String currentUserId, contactId) {
-    Stream<QuerySnapshot> qsStream =
+    Stream<QuerySnapshot<Map<String, dynamic>>> qsStream =
         _getFirestoreContactDocument(currentUserId, contactId)
             .collection(_firebaseSettings.messagesOfUserCollectionName)
             .where(Message.deletedKey, isEqualTo: 0)
@@ -284,7 +285,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
     return qsStream.map(
       (querySnapshot) {
         return querySnapshot.docs.map(
-          (DocumentSnapshot doc) {
+          (DocumentSnapshot<Map<String, dynamic>> doc) {
             return !doc.metadata.hasPendingWrites
                 ? getMessageFromDocumentSnapshot(doc)
                 : null;
@@ -297,7 +298,7 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
   @override
   Stream<List<Message?>> addListenerToContacts(
       String currentUserId, contactId) {
-    Stream<QuerySnapshot> qsStream = _firestore
+    Stream<QuerySnapshot<Map<String, dynamic>>> qsStream = _firestore
         .collection(_firebaseSettings.messagesCollectionName)
         .doc(currentUserId)
         .collection(_firebaseSettings.contactsCollectionName)
@@ -308,8 +309,8 @@ class FirestoreMessagesDatabaseService implements MessagesDatabaseService {
     return qsStream.map(
       (querySnapshot) {
         return querySnapshot.docChanges.map(
-          (DocumentChange change) {
-            DocumentSnapshot doc = change.doc;
+          (DocumentChange<Map<String, dynamic>> change) {
+            DocumentSnapshot<Map<String, dynamic>> doc = change.doc;
             return !doc.metadata.hasPendingWrites
                 ? getMessageFromDocumentSnapshot(doc)
                 : null;

@@ -6,6 +6,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 
+Future<void> _backgroundMessageHandler(RemoteMessage remoteMessage) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp();
+  Map<String, dynamic> message = remoteMessage.data;
+
+  //TODO: Find a way to handle background message
+  //_firebaseSettings.onFcmBackgroundMessage?.call(message);
+}
+
 class FcmNotificationService implements NotificationService {
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   late FirebaseSettings _firebaseSettings;
@@ -39,14 +49,7 @@ class FcmNotificationService implements NotificationService {
           Map<String, dynamic> message = remoteMessage.data;
           _firebaseSettings.onFcmMessage?.call(message);
         });
-        FirebaseMessaging.onBackgroundMessage((
-          RemoteMessage remoteMessage,
-        ) async {
-          await Firebase.initializeApp();
-          Map<String, dynamic> message = remoteMessage.data;
-          _firebaseSettings.onFcmBackgroundMessage?.call(message);
-          return Future<void>.value();
-        });
+        FirebaseMessaging.onBackgroundMessage(_backgroundMessageHandler);
         FirebaseMessaging.onMessageOpenedApp.listen((
           RemoteMessage remoteMessage,
         ) {

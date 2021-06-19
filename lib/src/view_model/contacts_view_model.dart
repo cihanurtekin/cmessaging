@@ -247,15 +247,22 @@ class ContactsViewModel with ChangeNotifier {
               create: (context) => MessagesViewModel(
                 userId: _currentDatabaseUserId!,
                 contactUser: contactUser,
-                settings: messagesPageSettings,
+                paginationLimitForFirstQuery:
+                    messagesPageSettings.paginationLimitForFirstQuery,
+                paginationLimitForOtherQueries:
+                    messagesPageSettings.paginationLimitForOtherQueries,
                 firebaseSettings: firebaseSettings,
                 languageSettings: languageSettings,
               ),
-              child: MessagesPage(),
+              child: MessagesPage(messagesPageSettings),
             ),
           ),
         );
       }
     }
+  }
+
+  void onBackButtonPressed(BuildContext context){
+    Navigator.pop(context);
   }
 }

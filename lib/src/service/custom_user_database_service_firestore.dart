@@ -21,7 +21,7 @@ class FirestoreCustomUserDatabaseService implements CustomUserDatabaseService {
   @override
   Future<CustomUser?> getUser(dynamic userId) async {
     if (userId is String) {
-      DocumentSnapshot snapshot = await _firestore
+      DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
           .collection(_firebaseSettings.usersCollectionName)
           .doc(userId)
           .get();

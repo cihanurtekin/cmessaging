@@ -35,7 +35,21 @@ class _MessageContactsPageState extends State<MessageContactsPage> {
     return Consumer<ContactsViewModel>(
       builder: (context, viewModel, child) => Scaffold(
         appBar: AppBar(
-          title: Text(viewModel.settings.contactsPageTitle),
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: viewModel.settings.backIconColor,
+            ),
+            onPressed: () {
+              viewModel.onBackButtonPressed(context);
+            },
+          ),
+          title: Text(
+            viewModel.settings.contactsPageTitle,
+            style: TextStyle(
+              color: viewModel.settings.titleTextColor,
+            ),
+          ),
           backgroundColor: viewModel.settings.toolbarColor,
         ),
         body: _buildBody(context),

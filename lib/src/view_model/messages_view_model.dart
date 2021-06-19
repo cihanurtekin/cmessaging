@@ -12,7 +12,6 @@ import 'package:c_messaging/src/repository/messages_database_repository.dart';
 import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
-import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:collection/collection.dart';
@@ -27,6 +26,11 @@ enum MessagesViewState {
 }
 
 class MessagesViewModel with ChangeNotifier {
+  MessagesDatabaseRepository _messagesDatabaseRepository =
+      locator<MessagesDatabaseRepository>();
+  NotificationRepository _notificationRepository =
+      locator<NotificationRepository>();
+
   MessagesViewState _state = MessagesViewState.Idle;
 
   MessagesViewState get state => _state;
@@ -52,25 +56,23 @@ class MessagesViewModel with ChangeNotifier {
 
   dynamic _lastMessageToStartAfter;
 
-  final MessagesPageSettings settings;
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  MessagesDatabaseRepository _messagesDatabaseRepository =
-      locator<MessagesDatabaseRepository>();
-  NotificationRepository _notificationRepository =
-      locator<NotificationRepository>();
+  final int paginationLimitForFirstQuery;
+  final int paginationLimitForOtherQueries;
 
   MessagesViewModel({
     required String userId,
     required CustomUser contactUser,
-    required this.settings,
+    required this.paginationLimitForFirstQuery,
+    required this.paginationLimitForOtherQueries,
     required this.firebaseSettings,
     required this.languageSettings,
   }) {
     _currentDatabaseUserId = userId;
     _contactUser = contactUser;
-    _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
+    _getMessagesWithPagination(paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
   }
@@ -84,7 +86,7 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   Future<void> getMessagesWithPagination() async {
-    await _getMessagesWithPagination(settings.paginationLimitForOtherQueries);
+    await _getMessagesWithPagination(paginationLimitForOtherQueries);
   }
 
   Future<void> _getMessagesWithPagination(int paginationLimit) async {

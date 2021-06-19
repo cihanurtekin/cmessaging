@@ -4,7 +4,9 @@ class ContactsPageSettings {
   final int paginationLimitForFirstQuery;
   final int paginationLimitForOtherQueries;
   final String defaultUsername;
-  final Color toolbarColor;
+  final Color? toolbarColor;
+  final Color? backIconColor;
+  final Color? titleTextColor;
   final bool showContactProfilePhoto;
   final bool showDivider;
   final double paddingTop;
@@ -35,7 +37,9 @@ class ContactsPageSettings {
     this.paginationLimitForFirstQuery = 10,
     this.paginationLimitForOtherQueries = 10,
     this.defaultUsername = 'Unknown',
-    this.toolbarColor = Colors.blue,
+    this.toolbarColor,
+    this.backIconColor,
+    this.titleTextColor,
     this.showContactProfilePhoto = true,
     this.showDivider = true,
     this.paddingTop = 8.0,

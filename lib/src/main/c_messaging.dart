@@ -15,14 +15,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CMessaging {
-  static final CMessaging _cMessaging = CMessaging._internal();
+  CMessaging._();
 
-  factory CMessaging() {
-    setupLocator();
-    return _cMessaging;
+  static CMessaging? _instance;
+
+  static CMessaging get instance {
+    if(_instance == null) {
+      setupLocator();
+      _instance = CMessaging._();
+    }
+    return _instance!;
   }
-
-  CMessaging._internal();
 
   String? _userId;
 
@@ -128,11 +131,14 @@ class CMessaging {
             create: (context) => MessagesViewModel(
               userId: _userId!,
               contactUser: contactUser,
-              settings: _messagesPageSettings,
+              paginationLimitForFirstQuery:
+                  _messagesPageSettings.paginationLimitForFirstQuery,
+              paginationLimitForOtherQueries:
+                  _messagesPageSettings.paginationLimitForOtherQueries,
               firebaseSettings: _firebaseSettings,
               languageSettings: _languageSettings,
             ),
-            child: MessagesPage(),
+            child: MessagesPage(_messagesPageSettings),
           ),
         ),
       );
