@@ -2,107 +2,99 @@ import 'package:c_messaging/src/custom_widgets/no_message_background.dart';
 import 'package:c_messaging/src/custom_widgets/profile_photo.dart';
 import 'package:c_messaging/src/custom_widgets/shimmer.dart';
 import 'package:c_messaging/src/model/message.dart';
+import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/view_model/contacts_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
-class MessageContactsPage extends StatefulWidget {
-  @override
-  _MessageContactsPageState createState() => _MessageContactsPageState();
-}
-
-class _MessageContactsPageState extends State<MessageContactsPage> {
-  ScrollController _controller = ScrollController();
-  GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+class MessageContactsPage extends StatelessWidget {
+  final ScrollController _controller = ScrollController();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
-  @override
-  void initState() {
-    super.initState();
-    initializeDateFormatting();
-    _controller.addListener(_scrollListener);
-  }
+  final ContactsPageSettings _pageSettings;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  MessageContactsPage(this._pageSettings) {
+    initializeDateFormatting();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ContactsViewModel>(
-      builder: (context, viewModel, child) => Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: viewModel.settings.backIconColor,
-            ),
-            onPressed: () {
-              viewModel.onBackButtonPressed(context);
-            },
-          ),
-          title: Text(
-            viewModel.settings.contactsPageTitle,
-            style: TextStyle(
-              color: viewModel.settings.titleTextColor,
-            ),
-          ),
-          backgroundColor: viewModel.settings.toolbarColor,
-        ),
-        body: _buildBody(context),
-      ),
-    ); //ShimmerView(photoRadius: widget.contactProfilePhotoRadius));
-  }
-
-  Widget _buildBody(BuildContext context) {
-    ContactsViewModel viewModel = Provider.of<ContactsViewModel>(context);
-    if (viewModel.state == ContactsViewState.Idle && viewModel.hasMessage()) {
-      return _buildListView();
-    } else if (viewModel.state == ContactsViewState.Idle &&
-        !viewModel.hasMessage()) {
-      return _buildNoMessageBody();
-    } else if (viewModel.state == ContactsViewState.Error) {
-      return _buildErrorBody();
-    } else {
-      return _buildShimmer();
-    }
-  }
-
-  Widget _buildNoMessageBody() {
-    return Consumer<ContactsViewModel>(
-      builder: (context, viewModel, child) => NoMessageBackground(
-        assetImagePath: viewModel.settings.noMessageAssetImagePath,
-        textContent: viewModel.settings.noMessageTextContent,
-        imageWidth: viewModel.settings.noMessageImageWidth,
-        textSize: viewModel.settings.noMessageTextSize,
-      ),
+    _addScrollListener(context);
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      body: _buildBody(context),
     );
   }
 
-  Widget _buildErrorBody() {
-    return Center(
-      child: Consumer<ContactsViewModel>(
-        builder: (context, viewModel, child) => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.refresh),
-              iconSize: 36.0,
-              onPressed: () {
-                viewModel.refreshContacts();
-              },
-            ),
-            SizedBox(height: 18.0),
-            Text(
-              viewModel.settings.errorTryAgainMessage,
-              style:
-                  TextStyle(fontSize: viewModel.settings.errorMessageTextSize),
-            ),
-          ],
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: _pageSettings.backIconColor,
         ),
+        onPressed: () {
+          ContactsViewModel viewModel =
+              Provider.of<ContactsViewModel>(context, listen: false);
+          viewModel.onBackButtonPressed(context);
+        },
+      ),
+      title: Text(
+        _pageSettings.contactsPageTitle,
+        style: TextStyle(
+          color: _pageSettings.titleTextColor,
+        ),
+      ),
+      backgroundColor: _pageSettings.toolbarColor,
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    return Consumer<ContactsViewModel>(builder: (context, viewModel, child) {
+      if (viewModel.state == ContactsViewState.Idle && viewModel.hasMessage()) {
+        return _buildListView(context);
+      } else if (viewModel.state == ContactsViewState.Idle &&
+          !viewModel.hasMessage()) {
+        return _buildNoMessageBody();
+      } else if (viewModel.state == ContactsViewState.Error) {
+        return _buildErrorBody(context);
+      } else {
+        return _buildShimmer();
+      }
+    });
+  }
+
+  Widget _buildNoMessageBody() {
+    return NoMessageBackground(
+      assetImagePath: _pageSettings.noMessageAssetImagePath,
+      textContent: _pageSettings.noMessageTextContent,
+      imageWidth: _pageSettings.noMessageImageWidth,
+      textSize: _pageSettings.noMessageTextSize,
+    );
+  }
+
+  Widget _buildErrorBody(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            iconSize: 36.0,
+            onPressed: () {
+              ContactsViewModel viewModel =
+                  Provider.of<ContactsViewModel>(context, listen: false);
+              viewModel.refreshContacts();
+            },
+          ),
+          SizedBox(height: 18.0),
+          Text(
+            _pageSettings.errorTryAgainMessage,
+            style: TextStyle(fontSize: _pageSettings.errorMessageTextSize),
+          ),
+        ],
       ),
     );
   }
@@ -114,20 +106,22 @@ class _MessageContactsPageState extends State<MessageContactsPage> {
         return Shimmer.fromColors(
           baseColor: Colors.grey[400]!,
           highlightColor: Colors.white,
-          child: _buildListTileView(index, true),
+          child: _buildListTileView(context, index, true),
         );
       },
     );
   }
 
-  Widget _buildListView() {
-    return Consumer<ContactsViewModel>(
-      builder: (context, viewModel, child) => RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: () async {
-          viewModel.refreshContacts();
-        },
-        child: ListView.builder(
+  Widget _buildListView(BuildContext context) {
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: () async {
+        ContactsViewModel viewModel =
+            Provider.of<ContactsViewModel>(context, listen: false);
+        viewModel.refreshContacts();
+      },
+      child: Consumer<ContactsViewModel>(
+        builder: (context, viewModel, child) => ListView.builder(
           physics: AlwaysScrollableScrollPhysics(),
           controller: _controller,
           itemCount: viewModel.messages.length,
@@ -138,173 +132,166 @@ class _MessageContactsPageState extends State<MessageContactsPage> {
   }
 
   Widget _buildListTile(BuildContext context, int index) {
-    return _buildListTileView(index, false);
+    return _buildListTileView(context, index, false);
   }
 
-  Widget _buildListTileView(int index, bool isShimmer) {
-    return Consumer<ContactsViewModel>(
-      builder: (context, viewModel, child) {
-        Message? message = viewModel.getMessageWithIndex(index);
-        return message != null
-            ? InkWell(
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(
-                        top: viewModel.settings.paddingTop,
-                        bottom: viewModel.settings.paddingBottom,
-                        left: viewModel.settings.paddingLeft,
-                        right: viewModel.settings.paddingRight,
-                      ),
-                      child: Container(
-                        height: viewModel.settings.profilePhotoRadius,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: <Widget>[
-                            if (viewModel.settings.showContactProfilePhoto)
-                              ProfilePhoto(
-                                photo: isShimmer
-                                    ? ProfilePhoto.SHIMMER_EFFECT
-                                    : message.contactUser?.profilePhotoUrl ??
-                                        "",
-                                placeholderImagePath: viewModel
-                                    .settings.profilePhotoPlaceholderPath,
-                                radius: viewModel.settings.profilePhotoRadius,
-                                backgroundColor: viewModel
-                                    .settings.profilePhotoBackgroundColor,
-                              ),
-                            SizedBox(
-                                width: viewModel
-                                    .settings.profilePhotoAndTextsSpaceBetween),
-                            Expanded(
-                              child: Column(
+  Widget _buildListTileView(BuildContext context, int index, bool isShimmer) {
+    ContactsViewModel viewModel =
+        Provider.of<ContactsViewModel>(context, listen: false);
+    Message? message = viewModel.getMessageWithIndex(index);
+    return message != null
+        ? InkWell(
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: _pageSettings.paddingTop,
+                    bottom: _pageSettings.paddingBottom,
+                    left: _pageSettings.paddingLeft,
+                    right: _pageSettings.paddingRight,
+                  ),
+                  child: Container(
+                    height: _pageSettings.profilePhotoRadius,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: <Widget>[
+                        if (_pageSettings.showContactProfilePhoto)
+                          ProfilePhoto(
+                            photo: isShimmer
+                                ? ProfilePhoto.SHIMMER_EFFECT
+                                : message.contactUser?.profilePhotoUrl ?? "",
+                            placeholderImagePath:
+                                _pageSettings.profilePhotoPlaceholderPath,
+                            radius: _pageSettings.profilePhotoRadius,
+                            backgroundColor:
+                                _pageSettings.profilePhotoBackgroundColor,
+                          ),
+                        SizedBox(
+                            width:
+                                _pageSettings.profilePhotoAndTextsSpaceBetween),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Row(
                                 mainAxisSize: MainAxisSize.max,
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                                    MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
-                                  Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: <Widget>[
-                                      Flexible(
-                                        child: isShimmer
-                                            ? _shimmerContainer(128.0, 8.0,
-                                                32.0, Colors.grey[400]!)
-                                            : Text(
-                                                message.contactUser?.username
-                                                        .trim() ??
-                                                    viewModel.settings
-                                                        .defaultUsername,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: viewModel.settings
-                                                      .usernameFontSize,
-                                                  color: viewModel.settings
-                                                      .usernameTextColor,
-                                                ),
-                                              ),
-                                      ),
-                                      isShimmer
-                                          ? _shimmerContainer(64.0, 8.0, 32.0,
-                                              Colors.grey[400]!)
-                                          : Text(
-                                              viewModel.getMessageDateText(
-                                                context,
-                                                index,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: viewModel.settings
-                                                    .messageDateFontSize,
-                                                color: viewModel.settings
-                                                    .messageDateTextColor,
-                                              ),
+                                  Flexible(
+                                    child: isShimmer
+                                        ? _shimmerContainer(
+                                            128.0, 8.0, 32.0, Colors.grey[400]!)
+                                        : Text(
+                                            message.contactUser?.username
+                                                    .trim() ??
+                                                _pageSettings.defaultUsername,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: _pageSettings
+                                                  .usernameFontSize,
+                                              color: _pageSettings
+                                                  .usernameTextColor,
                                             ),
-                                    ],
+                                          ),
                                   ),
                                   isShimmer
-                                      ? _shimmerContainer(double.infinity, 8.0,
-                                          32.0, Colors.grey[400]!)
-                                      : _buildLastMessageRow(message),
+                                      ? _shimmerContainer(
+                                          64.0, 8.0, 32.0, Colors.grey[400]!)
+                                      : Text(
+                                          viewModel.getMessageDateText(
+                                            context,
+                                            index,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: _pageSettings
+                                                .messageDateFontSize,
+                                            color: _pageSettings
+                                                .messageDateTextColor,
+                                          ),
+                                        ),
                                 ],
                               ),
-                            ),
-                          ],
+                              isShimmer
+                                  ? _shimmerContainer(double.infinity, 8.0,
+                                      32.0, Colors.grey[400]!)
+                                  : _buildLastMessageRow(context, message),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                    if (viewModel.settings.showDivider)
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: viewModel.settings.showContactProfilePhoto
-                              ? viewModel.settings.paddingLeft +
-                                  viewModel.settings.profilePhotoRadius +
-                                  viewModel
-                                      .settings.profilePhotoAndTextsSpaceBetween
-                              : viewModel.settings.paddingLeft +
-                                  viewModel.settings
-                                      .profilePhotoAndTextsSpaceBetween,
-                          right: viewModel.settings.paddingRight,
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          height: viewModel.settings.dividerHeight,
-                          color: Colors.grey,
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-                onTap: () {
-                  viewModel.openMessagesPage(context, index);
-                },
-                //onLongPress: () => _onListTileLongPressed(context, index),
-              )
-            : Container();
-      },
-    );
+                if (_pageSettings.showDivider)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: _pageSettings.showContactProfilePhoto
+                          ? _pageSettings.paddingLeft +
+                              _pageSettings.profilePhotoRadius +
+                              _pageSettings.profilePhotoAndTextsSpaceBetween
+                          : _pageSettings.paddingLeft +
+                              _pageSettings.profilePhotoAndTextsSpaceBetween,
+                      right: _pageSettings.paddingRight,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      height: _pageSettings.dividerHeight,
+                      color: Colors.grey,
+                    ),
+                  ),
+              ],
+            ),
+            onTap: () {
+              viewModel.openMessagesPage(context, index);
+            },
+            //onLongPress: () => _onListTileLongPressed(context, index),
+          )
+        : Container();
   }
 
-  Widget _buildLastMessageRow(Message message) {
-    return Consumer<ContactsViewModel>(
-      builder: (context, viewModel, child) => Row(
-        children: <Widget>[
-          if (viewModel.isUserSender(message))
-            Container(
-              margin: EdgeInsets.only(right: 2.0),
-              child: Icon(
-                message.status == Message.STATUS_WAITING
-                    ? Icons.access_time
-                    : message.status == Message.STATUS_SENT
-                        ? Icons.check
-                        : message.status == Message.STATUS_ERROR
-                            ? Icons.clear
-                            : Icons.access_time,
-                size: viewModel.settings.lastMessageFontSize,
-                color: viewModel.settings.lastMessageTextColor,
-              ),
-            ),
-          Expanded(
-            child: Text(
-              message.messageType == Message.MESSAGE_TYPE_IMAGE
-                  ? viewModel.settings.imageTypeText
-                  : message.messageBody,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: viewModel.settings.lastMessageFontSize,
-                color: viewModel.settings.lastMessageTextColor,
-                fontStyle: message.messageType == Message.MESSAGE_TYPE_IMAGE
-                    ? FontStyle.italic
-                    : FontStyle.normal,
-              ),
+  Widget _buildLastMessageRow(BuildContext context, Message message) {
+    ContactsViewModel viewModel =
+        Provider.of<ContactsViewModel>(context, listen: false);
+    return Row(
+      children: <Widget>[
+        if (viewModel.isUserSender(message))
+          Container(
+            margin: EdgeInsets.only(right: 2.0),
+            child: Icon(
+              message.status == Message.STATUS_WAITING
+                  ? Icons.access_time
+                  : message.status == Message.STATUS_SENT
+                      ? Icons.check
+                      : message.status == Message.STATUS_ERROR
+                          ? Icons.clear
+                          : Icons.access_time,
+              size: _pageSettings.lastMessageFontSize,
+              color: _pageSettings.lastMessageTextColor,
             ),
           ),
-        ],
-      ),
+        Expanded(
+          child: Text(
+            message.messageType == Message.MESSAGE_TYPE_IMAGE
+                ? _pageSettings.imageTypeText
+                : message.messageBody,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: _pageSettings.lastMessageFontSize,
+              color: _pageSettings.lastMessageTextColor,
+              fontStyle: message.messageType == Message.MESSAGE_TYPE_IMAGE
+                  ? FontStyle.italic
+                  : FontStyle.normal,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -319,13 +306,19 @@ class _MessageContactsPageState extends State<MessageContactsPage> {
     );
   }
 
-  _scrollListener() {
+  _addScrollListener(BuildContext context) {
+    _controller.addListener(() {
+      _scrollListener(context);
+    });
+  }
+
+  _scrollListener(BuildContext context) {
     if (_controller.offset >= _controller.position.maxScrollExtent &&
         !_controller.position.outOfRange) {
-      if (mounted) {
-        Provider.of<ContactsViewModel>(context, listen: false)
-            .getMessagesWithPagination();
-      }
+      //if (mounted) {
+      Provider.of<ContactsViewModel>(context, listen: false)
+          .getMessagesWithPagination();
+      //}
     }
   }
 }

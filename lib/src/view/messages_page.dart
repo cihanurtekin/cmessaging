@@ -8,18 +8,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class MessagesPage extends StatelessWidget {
-  TextEditingController _messageTextFieldController = TextEditingController();
+  final TextEditingController _messageTextFieldController =
+      TextEditingController();
 
-  ScrollController _controller = ScrollController();
+  final ScrollController _controller = ScrollController();
 
   final MessagesPageSettings _pageSettings;
 
-  MessagesPage(this._pageSettings) {
-    _controller.addListener(_scrollListener);
-  }
+  MessagesPage(this._pageSettings);
 
   @override
   Widget build(BuildContext context) {
+    _addScrollListener(context);
     return WillPopScope(
       onWillPop: onPop,
       child: Scaffold(
@@ -33,7 +33,7 @@ class MessagesPage extends StatelessWidget {
     return true;
   }
 
-  _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar(BuildContext context) {
     MessagesViewModel viewModel =
         Provider.of<MessagesViewModel>(context, listen: false);
     CustomUser contactUser = viewModel.contactUser;
@@ -358,13 +358,19 @@ class MessagesPage extends StatelessWidget {
     }*/
   }
 
-  _scrollListener() {
+  _addScrollListener(BuildContext context) {
+    _controller.addListener(() {
+      _scrollListener(context);
+    });
+  }
+
+  _scrollListener(BuildContext context) {
     if (_controller.offset >= _controller.position.maxScrollExtent &&
         !_controller.position.outOfRange) {
-      /*if (mounted) {
-        Provider.of<MessagesViewModel>(context, listen: false)
-            .getMessagesWithPagination();
-      }*/
+      //if (mounted) {
+      Provider.of<MessagesViewModel>(context, listen: false)
+          .getMessagesWithPagination();
+      //}
     }
   }
 

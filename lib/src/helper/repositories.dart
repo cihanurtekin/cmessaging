@@ -11,6 +11,7 @@ import 'package:c_messaging/src/service/notification_service_fcm.dart';
 import 'package:c_messaging/src/settings/debug_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
+import 'package:flutter/material.dart';
 
 class Repositories {
   late MessagesDatabaseRepository _messagesDatabaseRepository;
@@ -39,10 +40,10 @@ class Repositories {
     _serviceSettings = serviceSettings;
   }
 
-  createAll() {
+  createAll(BuildContext context) {
     _createMessagesDatabaseRepository();
     _createCustomUserDatabaseRepository();
-    _createNotificationRepository();
+    _createNotificationRepository(context);
   }
 
   _createMessagesDatabaseRepository() {
@@ -71,16 +72,16 @@ class Repositories {
     _customUserDatabaseRepository.initialize(_serviceSettings);
   }
 
-  _createNotificationRepository() async {
+  _createNotificationRepository(BuildContext context) async {
     DebugNotificationService debugNotificationService =
         locator<DebugNotificationService>();
     FcmNotificationService fcmNotificationService =
         locator<FcmNotificationService>();
 
-    await debugNotificationService.initialize(_debugSettings);
-    await fcmNotificationService.initialize(_firebaseSettings);
+    await debugNotificationService.initialize(context, _debugSettings);
+    await fcmNotificationService.initialize(context, _firebaseSettings);
 
     _notificationRepository = locator<NotificationRepository>();
-    _notificationRepository.initialize(_serviceSettings);
+    _notificationRepository.initialize(context, _serviceSettings);
   }
 }

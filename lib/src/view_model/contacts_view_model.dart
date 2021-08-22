@@ -7,7 +7,6 @@ import 'package:c_messaging/src/model/custom_user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/repository/custom_user_database_repository.dart';
 import 'package:c_messaging/src/repository/messages_database_repository.dart';
-import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
@@ -47,7 +46,6 @@ class ContactsViewModel with ChangeNotifier {
 
   String? _currentDatabaseUserId;
 
-  final ContactsPageSettings settings;
   final MessagesPageSettings messagesPageSettings;
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
@@ -57,15 +55,19 @@ class ContactsViewModel with ChangeNotifier {
   CustomUserDatabaseRepository _customUserDatabaseRepository =
       locator<CustomUserDatabaseRepository>();
 
+  final int paginationLimitForFirstQuery;
+  final int paginationLimitForOtherQueries;
+
   ContactsViewModel({
     required String userId,
-    required this.settings,
+    required this.paginationLimitForFirstQuery,
+    required this.paginationLimitForOtherQueries,
     required this.messagesPageSettings,
     required this.firebaseSettings,
     required this.languageSettings,
   }) {
     _currentDatabaseUserId = userId;
-    _getMessagesWithPagination(settings.paginationLimitForFirstQuery).then((_) {
+    _getMessagesWithPagination(paginationLimitForFirstQuery).then((_) {
       _addListener();
     });
   }
@@ -80,11 +82,11 @@ class ContactsViewModel with ChangeNotifier {
     state = ContactsViewState.LoadingFirstQuery;
     _messages = [];
     _lastMessageToStartAfter = null;
-    _getMessagesWithPagination(settings.paginationLimitForFirstQuery);
+    _getMessagesWithPagination(paginationLimitForFirstQuery);
   }
 
   Future<void> getMessagesWithPagination() async {
-    await _getMessagesWithPagination(settings.paginationLimitForOtherQueries);
+    await _getMessagesWithPagination(paginationLimitForOtherQueries);
   }
 
   Future<void> _getMessagesWithPagination(int paginationLimit) async {
@@ -192,7 +194,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  newMessageHandler(Message newMessage) {
+  void newMessageHandler(Message newMessage) {
     if (_isFirstQuery) {
       _isFirstQuery = false;
     } else {
@@ -214,7 +216,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  updateLastMessageCallback(Message message) {
+  void updateLastMessageCallback(Message message) {
     int index = messages.indexWhere((m) => m.contactId == message.contactId);
     if (index >= 0) {
       messages[index] = message;
@@ -225,7 +227,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  updateMessageStatusCallback(Message mess) {
+  void updateMessageStatusCallback(Message mess) {
     Message? message = messages.firstWhereOrNull(
       (m) => m.contactId == mess.contactId,
     );
@@ -235,7 +237,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  openMessagesPage(BuildContext context, int index) {
+  void openMessagesPage(BuildContext context, int index) {
     Message? message = getMessageWithIndex(index);
     if (_currentDatabaseUserId != null && message != null) {
       CustomUser? contactUser = message.contactUser;

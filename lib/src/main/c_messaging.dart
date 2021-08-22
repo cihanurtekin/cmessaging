@@ -20,7 +20,7 @@ class CMessaging {
   static CMessaging? _instance;
 
   static CMessaging get instance {
-    if(_instance == null) {
+    if (_instance == null) {
       setupLocator();
       _instance = CMessaging._();
     }
@@ -58,7 +58,7 @@ class CMessaging {
     _languageSettings = value;
   }
 
-  init({
+  init(BuildContext context, {
     required String userId,
     required ServiceSettings serviceSettings,
     required FirebaseSettings firebaseSettings,
@@ -74,20 +74,20 @@ class CMessaging {
     _contactsPageSettings = contactsPageSettings ?? ContactsPageSettings();
     _messagesPageSettings = messagesPageSettings ?? MessagesPageSettings();
     _languageSettings = languageSettings ?? LanguageSettings();
-    _initRepositories();
+    _initRepositories(context);
   }
 
   bool get isInitialized {
     return _userId != null;
   }
 
-  _initRepositories() {
+  _initRepositories(BuildContext context) {
     _repositories = Repositories(
       debugSettings: _debugSettings,
       firebaseSettings: _firebaseSettings,
       serviceSettings: _serviceSettings,
     );
-    _repositories.createAll();
+    _repositories.createAll(context);
   }
 
   pushContactsPage(BuildContext context) {
@@ -98,12 +98,15 @@ class CMessaging {
           builder: (BuildContext context) => ChangeNotifierProvider(
             create: (context) => ContactsViewModel(
               userId: _userId!,
-              settings: _contactsPageSettings,
+              paginationLimitForFirstQuery:
+                  _contactsPageSettings.paginationLimitForFirstQuery,
+              paginationLimitForOtherQueries:
+                  _contactsPageSettings.paginationLimitForOtherQueries,
               messagesPageSettings: _messagesPageSettings,
               firebaseSettings: _firebaseSettings,
               languageSettings: _languageSettings,
             ),
-            child: MessageContactsPage(),
+            child: MessageContactsPage(_contactsPageSettings),
           ),
         ),
       );

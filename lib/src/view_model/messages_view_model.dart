@@ -151,7 +151,7 @@ class MessagesViewModel with ChangeNotifier {
     return null;
   }
 
-  sendImageMessage(BuildContext context) async {
+  void sendImageMessage(BuildContext context) async {
     File? imageFile = await PhotoPicker(
       takePhotoText: languageSettings.takePhoto,
       chooseFromGalleryText: languageSettings.chooseFromGallery,
@@ -200,7 +200,7 @@ class MessagesViewModel with ChangeNotifier {
     }*/
   }
 
-  sendMessage(String messageBody) async {
+  Future<void> sendMessage(String messageBody) async {
     Message? newLastMessage = await _sendMessage(messageBody);
     //contactsViewModel.updateLastMessageCallback(newLastMessage);
     //contactsViewModel.updateMessageStatusCallback(newLastMessage);
@@ -245,12 +245,13 @@ class MessagesViewModel with ChangeNotifier {
     return null;
   }
 
-  _sendNotification(String messageBody) {
+  void _sendNotification(String messageBody) {
     String ntfId = contactUser.notificationId;
+    print(contactUser);
     if (ntfId.isNotEmpty &&
         contactUser.notificationId != firebaseSettings.defaultNotificationId) {
       _notificationRepository.sendNotification(
-        "",
+        contactUser.username,
         messageBody,
         _contactUser.notificationId,
       );
@@ -330,7 +331,7 @@ class MessagesViewModel with ChangeNotifier {
     }
   }
 
-  updateMessageStatus(Message message, int status) {
+  void updateMessageStatus(Message message, int status) {
     for (Message m in _messages) {
       if (m.randomId == message.randomId) {
         m.status = status;
@@ -340,7 +341,7 @@ class MessagesViewModel with ChangeNotifier {
     }
   }
 
-  newMessageHandler(Message newMessage) {
+  void newMessageHandler(Message newMessage) {
     for (Message m in _messages) {
       if (m.randomId == newMessage.randomId) {
         m.messageId = newMessage.messageId;

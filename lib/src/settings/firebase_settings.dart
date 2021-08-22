@@ -1,3 +1,4 @@
+import 'package:c_messaging/src/settings/fcm_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 
 class FirebaseSettings implements SettingsBase {
@@ -17,23 +18,18 @@ class FirebaseSettings implements SettingsBase {
   final String contactsCollectionName;
   final bool firestorePersistenceEnabledMessages;
 
-  // Firebase Cloud Messaging Settings
-  final String fcmNotificationUrl;
-  final String fcmServerKey;
-  final void Function(Map<String, dynamic> message)? onFcmMessage;
-  final void Function(Map<String, dynamic> message)? onFcmBackgroundMessage;
-  final void Function(Map<String, dynamic> message)? onFcmMessageOpened;
-
   // Firebase Storage Settings
   final String storageMessagesFolderName;
+
+  // Firebase Cloud Messaging Settings
+  final FcmSettings? fcmSettings;
 
   FirebaseSettings({
     required this.usersCollectionName,
     required this.usernameKey,
     required this.userProfilePhotoUrlKey,
     required this.userNotificationIdKey,
-    required this.fcmServerKey,
-    this.fcmNotificationUrl = 'https://fcm.googleapis.com/fcm/send',
+    //this.fcmNotificationUrl = 'https://fcm.googleapis.com/fcm/send',
     this.defaultUsername = 'Unknown User',
     this.defaultProfilePhotoUrl = '',
     this.defaultNotificationId = '',
@@ -43,8 +39,6 @@ class FirebaseSettings implements SettingsBase {
     this.storageMessagesFolderName = 'messages',
     this.firestorePersistenceEnabledCustomUser = false,
     this.firestorePersistenceEnabledMessages = false,
-    this.onFcmMessage,
-    this.onFcmBackgroundMessage,
-    this.onFcmMessageOpened,
+    this.fcmSettings,
   });
 }

@@ -6,12 +6,13 @@ import 'package:c_messaging/src/service/notification_service_debug.dart';
 import 'package:c_messaging/src/service/notification_service_fcm.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
+import 'package:flutter/material.dart';
 
 class NotificationRepository implements NotificationBase {
   NotificationService _service = locator<FcmNotificationService>();
 
   @override
-  Future<void> initialize(SettingsBase settings) async {
+  Future<void> initialize(BuildContext context, SettingsBase settings) async {
     if (settings is ServiceSettings) {
       if (settings.userDatabaseServiceMode ==
           UserDatabaseServiceMode.Firestore) {
