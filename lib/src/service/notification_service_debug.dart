@@ -17,9 +17,13 @@ class DebugNotificationService implements NotificationService {
   }
 
   @override
-  Future<NotificationResult> sendNotification(String notificationTitle,
-      String notificationBody, String receiverNotificationId) {
+  Future<NotificationResult> sendNotification({
+    required String title,
+    required String body,
+    required String receiverNotificationId,
+    String? currentUserId,
+  }) async {
     // TODO: implement sendNotification
-    throw NotificationResult.Success;
+    return NotificationResult.Success;
   }
 }

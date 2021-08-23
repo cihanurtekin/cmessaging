@@ -246,14 +246,14 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   void _sendNotification(String messageBody) {
-    String ntfId = contactUser.notificationId;
-    print(contactUser);
-    if (ntfId.isNotEmpty &&
-        contactUser.notificationId != firebaseSettings.defaultNotificationId) {
+    String notificationId = contactUser.notificationId;
+    if (notificationId.isNotEmpty &&
+        notificationId != firebaseSettings.defaultNotificationId) {
       _notificationRepository.sendNotification(
-        contactUser.username,
-        messageBody,
-        _contactUser.notificationId,
+        title: contactUser.username,
+        body: messageBody,
+        receiverNotificationId: notificationId,
+        currentUserId: _currentDatabaseUserId,
       );
     }
   }

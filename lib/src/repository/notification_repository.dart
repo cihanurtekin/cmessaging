@@ -29,15 +29,17 @@ class NotificationRepository implements NotificationBase {
   }
 
   @override
-  Future<NotificationResult> sendNotification(
-    String notificationTitle,
-    String notificationBody,
-    String receiverNotificationId,
-  ) async {
+  Future<NotificationResult> sendNotification({
+    required String title,
+    required String body,
+    required String receiverNotificationId,
+    String? currentUserId,
+  }) async {
     return await _service.sendNotification(
-      notificationTitle,
-      notificationBody,
-      receiverNotificationId,
+      title: title,
+      body: body,
+      receiverNotificationId: receiverNotificationId,
+      currentUserId: currentUserId,
     );
   }
 }

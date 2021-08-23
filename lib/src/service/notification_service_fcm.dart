@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:c_messaging/src/main/public_enums.dart';
-import 'package:c_messaging/src/model/notification.dart';
+import 'package:c_messaging/src/model/c_notification.dart';
 import 'package:c_messaging/src/service/base/notification_service.dart';
 import 'package:c_messaging/src/settings/fcm_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
@@ -17,25 +17,16 @@ Future<void> _backgroundMessageHandler(RemoteMessage remoteMessage) async {
   await Firebase.initializeApp();
 
   RemoteNotification? remoteNotification = remoteMessage.notification;
-  if (remoteNotification != null) {
-    FcmSettings.onFcmBackgroundMessageHandler?.call({
-      'id': remoteMessage.hashCode,
-      'title': remoteNotification.title,
-      'body': remoteNotification.body,
-    });
-  }
+  if (remoteNotification != null) {}
 
   //TODO: Find a way to handle background message
-  //_firebaseSettings.onFcmBackgroundMessage?.call(message);
+  //_firebaseSettings.onBackgroundMessage?.call(message);
 }
 
 class FcmNotificationService implements NotificationService {
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   late FirebaseSettings _firebaseSettings;
   bool _showForegroundNotifications = true;
-
-  final String notificationJsonType = 'notification_type';
-  final String notificationJsonTypeMessage = 'message';
 
   @override
   Future<void> initialize(
@@ -50,12 +41,11 @@ class FcmNotificationService implements NotificationService {
             await _firebaseMessaging.getInitialMessage();
 
         if (initialMessage != null) {
-          Notification? notification = _getNotification(initialMessage);
+          CNotification? notification = _getNotification(initialMessage);
           if (notification != null) {
-            if (notification.type == NotificationType.MESSAGE) {
-              print("!!!!!!!!!!!!!! 111 : " + (notification.title ?? ""));
-              fcmSettings.onFcmMessageOpened
-                  ?.call(context, notification.toMap());
+            if (notification.type == fcmSettings.notificationType) {
+              await fcmSettings.onMessageOpenedAppTerminated
+                  ?.call(context, notification);
             }
           }
         }
@@ -86,36 +76,38 @@ class FcmNotificationService implements NotificationService {
               AuthorizationStatus.provisional) {
         FirebaseMessaging.onMessage.listen((RemoteMessage remoteMessage) {
           if (fcmSettings != null) {
-            Notification? notification = _getNotification(remoteMessage);
+            CNotification? notification = _getNotification(remoteMessage);
             if (notification != null) {
-              fcmSettings.onFcmMessage?.call(context, notification.toMap());
+              fcmSettings.onForegroundMessage?.call(context, notification);
             }
           }
         });
         FirebaseMessaging.onBackgroundMessage(_backgroundMessageHandler);
-        /*FirebaseMessaging.onMessageOpenedApp.listen((
+        FirebaseMessaging.onMessageOpenedApp.listen((
           RemoteMessage remoteMessage,
         ) {
           if (fcmSettings != null) {
-            Notification? notification = _getNotification(remoteMessage);
+            CNotification? notification = _getNotification(remoteMessage);
             if (notification != null) {
-              fcmSettings.onFcmMessageOpened?.call(notification.toMap());
+              fcmSettings.onMessageOpenedAppBackground
+                  ?.call(context, notification);
             }
           }
-        });*/
+        });
       }
       getNotificationId();
     }
   }
 
-  Notification? _getNotification(RemoteMessage remoteMessage) {
+  CNotification? _getNotification(RemoteMessage remoteMessage) {
     RemoteNotification? remoteNotification = remoteMessage.notification;
     if (remoteNotification != null) {
-      return Notification(
+      return CNotification(
         id: remoteMessage.hashCode,
         title: remoteNotification.title,
         body: remoteNotification.body,
-        type: remoteMessage.data[Notification.typeKey],
+        type: remoteMessage.data[CNotification.typeKey],
+        contactUserId: remoteMessage.data[CNotification.contactUserIdKey],
       );
     }
     return null;
@@ -127,11 +119,12 @@ class FcmNotificationService implements NotificationService {
   }
 
   @override
-  Future<NotificationResult> sendNotification(
-    String notificationTitle,
-    String notificationBody,
-    String receiverNotificationId,
-  ) async {
+  Future<NotificationResult> sendNotification({
+    required String title,
+    required String body,
+    required String receiverNotificationId,
+    String? currentUserId,
+  }) async {
     NotificationResult result = NotificationResult.Error;
     FcmSettings? fcmSettings = _firebaseSettings.fcmSettings;
     if (fcmSettings != null) {
@@ -141,9 +134,12 @@ class FcmNotificationService implements NotificationService {
       Uri notificationUrl = Uri.parse(fcmSettings.notificationUrl);
 
       String notification = _getNotificationObject(
-        notificationTitle: notificationTitle,
-        notificationBody: notificationBody,
+        notificationTitle: title,
+        notificationBody: body,
         firebaseMessagingId: receiverNotificationId,
+        notificationType: fcmSettings.notificationType,
+        notificationChannelId: fcmSettings.notificationChannelId,
+        currentUserId: currentUserId,
       );
 
       print(notification);
@@ -184,22 +180,27 @@ class FcmNotificationService implements NotificationService {
   }
 
   String _getNotificationObject({
-    String notificationTitle = "",
-    String notificationBody = "",
-    String firebaseMessagingId = "",
+    required String notificationTitle,
+    required String notificationBody,
+    required String firebaseMessagingId,
+    required String notificationType,
+    required String notificationChannelId,
+    String? currentUserId,
   }) {
     Map<String, Map<String, dynamic>> notificationMap = {
       'message': <String, dynamic>{
         'notification': <String, String>{
-          Notification.titleKey: notificationTitle,
-          Notification.bodyKey: notificationBody,
+          CNotification.titleKey: notificationTitle,
+          CNotification.bodyKey: notificationBody,
         },
         'data': <String, String>{
-          Notification.typeKey: NotificationType.MESSAGE,
+          CNotification.typeKey: notificationType,
+          CNotification.contactUserIdKey: currentUserId ?? ''
         },
         'android': <String, dynamic>{
           'notification': {
             'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'channel_id': notificationChannelId,
           }
         },
         'token': firebaseMessagingId,

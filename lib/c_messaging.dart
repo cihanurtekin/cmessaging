@@ -9,3 +9,5 @@ export 'src/settings/fcm_settings.dart';
 export 'src/settings/contacts_page_settings.dart';
 export 'src/settings/messages_page_settings.dart';
 export 'src/settings/language_settings.dart';
+
+export 'src/model/c_notification.dart';
