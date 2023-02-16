@@ -13,7 +13,7 @@ class CMessagingSettings {
     usernameKey: CustomFirebaseSettings.USERNAME_KEY,
     userProfilePhotoUrlKey: CustomFirebaseSettings.USER_PROFILE_PHOTO_URL_KEY,
     userNotificationIdKey: CustomFirebaseSettings.USER_NOTIFICATION_ID_KEY,
-    fcmServerKey: CustomFirebaseSettings.FCM_SERVER_KEY,
+    // 15.02.2023 fcmServerKey: CustomFirebaseSettings.FCM_SERVER_KEY,
   );
 
   static LanguageSettings languageSettings = LanguageSettings();

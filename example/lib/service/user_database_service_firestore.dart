@@ -18,7 +18,7 @@ class FirestoreUserDatabaseService {
 
   Future<User?> getUser(dynamic userId) async {
     if (userId is String) {
-      DocumentSnapshot snapshot =
+      DocumentSnapshot<Map<String, dynamic>?> snapshot =
           await _firestore.collection("users").doc(userId).get();
 
       Map<String, dynamic>? snapshotData = snapshot.data();

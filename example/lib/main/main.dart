@@ -8,7 +8,7 @@ import 'package:c_messaging/c_messaging.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  _initCMessaging();
+  //_initCMessaging();
   //setupLocator();
   runApp(MyApp());
 }
@@ -32,13 +32,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
-_initCMessaging() {
-  CMessaging().init(
+_initCMessaging(BuildContext context) {
+  // 15.02.2023
+  /*CMessaging().init(
+    context,
     userId: "",
     serviceSettings: CMessagingSettings.serviceSettings,
     firebaseSettings: CMessagingSettings.firebaseSettings,
     languageSettings: CMessagingSettings.languageSettings,
     contactsPageSettings: CMessagingSettings.contactsPageSettings,
     messagesPageSettings: CMessagingSettings.messagesPageSettings,
-  );
+  );*/
 }

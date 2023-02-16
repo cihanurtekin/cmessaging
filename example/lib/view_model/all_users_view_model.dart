@@ -31,8 +31,9 @@ class AllUsersViewModel with ChangeNotifier {
     state = AllUsersViewState.Loading;
 
     try {
-      QuerySnapshot qs = await _firestore.collection("users").limit(10).get();
-      for (DocumentSnapshot doc in qs.docs) {
+      QuerySnapshot<Map<String, dynamic>?> qs =
+          await _firestore.collection("users").limit(10).get();
+      for (DocumentSnapshot<Map<String, dynamic>?> doc in qs.docs) {
         try {
           Map<String, dynamic>? docData = doc.data();
           if (docData != null) {
@@ -51,6 +52,6 @@ class AllUsersViewModel with ChangeNotifier {
   }
 
   openContactsPage(BuildContext context) {
-    CMessaging().pushContactsPage(context);
+    // 15.02.2023 CMessaging().pushContactsPage(context);
   }
 }
