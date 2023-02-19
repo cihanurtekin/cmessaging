@@ -1,28 +1,28 @@
-import 'package:c_messaging/src/model/custom_user.dart';
-import 'package:c_messaging/src/service/base/custom_user_database_service.dart';
+import 'package:c_messaging/src/model/user.dart';
+import 'package:c_messaging/src/service/base/user_database_service.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FirestoreCustomUserDatabaseService implements CustomUserDatabaseService {
+class FirestoreUserDatabaseService implements UserDatabaseService {
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late FirebaseSettings _firebaseSettings;
+  FirebaseSettings? _firebaseSettings;
 
   @override
   void initialize(SettingsBase settings) {
     if (settings is FirebaseSettings) {
       _firebaseSettings = settings;
       _firestore.settings = Settings(
-        persistenceEnabled: settings.firestorePersistenceEnabledCustomUser,
+        persistenceEnabled: settings.firestorePersistenceEnabledUser,
       );
     }
   }
 
   @override
-  Future<CustomUser?> getUser(dynamic userId) async {
-    if (userId is String) {
+  Future<User?> getUser(dynamic userId) async {
+    if (userId is String && _firebaseSettings != null) {
       DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
-          .collection(_firebaseSettings.usersCollectionName)
+          .collection(_firebaseSettings!.usersCollectionName)
           .doc(userId)
           .get();
 
@@ -30,15 +30,15 @@ class FirestoreCustomUserDatabaseService implements CustomUserDatabaseService {
 
       if (snapshotData != null) {
         String profilePhotoUrl =
-            snapshotData[_firebaseSettings.userProfilePhotoUrlKey] ??
-                _firebaseSettings.defaultProfilePhotoUrl;
-        String username = snapshotData[_firebaseSettings.usernameKey] ??
-            _firebaseSettings.defaultUsername;
+            snapshotData[_firebaseSettings!.userProfilePhotoUrlKey] ??
+                _firebaseSettings!.defaultProfilePhotoUrl;
+        String username = snapshotData[_firebaseSettings!.usernameKey] ??
+            _firebaseSettings!.defaultUsername;
         String firebaseMessagingId =
-            snapshotData[_firebaseSettings.userNotificationIdKey] ??
-                _firebaseSettings.defaultNotificationId;
+            snapshotData[_firebaseSettings!.userNotificationIdKey] ??
+                _firebaseSettings!.defaultNotificationId;
 
-        CustomUser user = CustomUser(
+        User user = User(
           userId: userId,
           username: username,
           profilePhotoUrl: profilePhotoUrl,

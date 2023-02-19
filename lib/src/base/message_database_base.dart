@@ -4,19 +4,12 @@ import 'package:c_messaging/src/settings/settings_base.dart';
 
 enum ListType { Messages, Contacts }
 
-abstract class MessagesDatabaseBase {
+abstract class MessageDatabaseBase {
   void initialize(SettingsBase settings);
 
-  Future<MessagesDatabaseResult> sendMessage(
+  Future<MessageDatabaseResult> sendMessage(
     String currentUserId,
     Message message,
-  );
-
-  Future<MessagesDatabaseResult> deleteMessage(
-    String currentUserId,
-    Message message,
-    bool isLastMessage,
-    Message newLastMessage,
   );
 
   Future<Message?> getMessage(
@@ -32,9 +25,16 @@ abstract class MessagesDatabaseBase {
     int paginationLimit,
   );
 
-  Stream<List<Message?>> addListenerToMessages(
+  Future<MessageDatabaseResult> deleteMessage(
     String currentUserId,
-    contactId,
+    Message message,
+    bool isLastMessage,
+    Message newLastMessage,
+  );
+
+  Future<MessageDatabaseResult> deleteAllMessagesOfContact(
+    String currentUserId,
+    String contactUid,
   );
 
   Stream<List<Message?>> addListenerToContacts(
@@ -42,8 +42,8 @@ abstract class MessagesDatabaseBase {
     contactId,
   );
 
-  Future<MessagesDatabaseResult> deleteAllMessagesOfContact(
+  Stream<List<Message?>> addListenerToMessages(
     String currentUserId,
-    String contactUid,
+    contactId,
   );
 }

@@ -6,8 +6,6 @@ class MessagesPageSettings {
   final String? backgroundImageAssetPath;
   final String messagePhotoPlaceholderPath;
   final String profilePhotoPlaceholderPath;
-  final String defaultUsernameForContactTitle;
-  final String defaultUsernameForNotification;
   final double listTileMinPadding;
   final double listTileMaxPadding;
   final double listTileCornerRadius;
@@ -31,8 +29,6 @@ class MessagesPageSettings {
     this.messagePhotoPlaceholderPath =
         'assets/images/cmessaging/message_photo_placeholder.png',
     this.profilePhotoPlaceholderPath = 'assets/images/cmessaging/nomessage.png',
-    this.defaultUsernameForContactTitle = 'Unknown',
-    this.defaultUsernameForNotification = 'Unknown',
     this.listTileMinPadding = 4.0,
     this.listTileMaxPadding = 32.0,
     this.listTileCornerRadius = 4.0,

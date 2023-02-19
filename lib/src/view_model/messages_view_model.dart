@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:c_messaging/src/base/messages_database_base.dart';
+import 'package:c_messaging/src/base/message_database_base.dart';
 import 'package:c_messaging/src/custom_widgets/photo_picker.dart';
 import 'package:c_messaging/src/dialog/dialog_helper.dart';
-import 'package:c_messaging/src/helper/locator.dart';
+import 'package:c_messaging/src/dialog/loading_dialog.dart';
+import 'package:c_messaging/src/repository/storage_repository.dart';
+import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
-import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
-import 'package:c_messaging/src/repository/messages_database_repository.dart';
+import 'package:c_messaging/src/repository/message_database_repository.dart';
 import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
@@ -26,10 +28,11 @@ enum MessagesViewState {
 }
 
 class MessagesViewModel with ChangeNotifier {
-  MessagesDatabaseRepository _messagesDatabaseRepository =
-      locator<MessagesDatabaseRepository>();
+  MessageDatabaseRepository _messagesDatabaseRepository =
+      locator<MessageDatabaseRepository>();
   NotificationRepository _notificationRepository =
       locator<NotificationRepository>();
+  StorageRepository _storageRepository = locator<StorageRepository>();
 
   MessagesViewState _state = MessagesViewState.Idle;
 
@@ -46,9 +49,9 @@ class MessagesViewModel with ChangeNotifier {
   //bool _listenFirstQuery = true;
 
   String? _currentDatabaseUserId;
-  late CustomUser _contactUser;
+  late User _contactUser;
 
-  CustomUser get contactUser => _contactUser;
+  User get contactUser => _contactUser;
 
   List<Message> _messages = [];
 
@@ -64,7 +67,7 @@ class MessagesViewModel with ChangeNotifier {
 
   MessagesViewModel({
     required String userId,
-    required CustomUser contactUser,
+    required User contactUser,
     required this.paginationLimitForFirstQuery,
     required this.paginationLimitForOtherQueries,
     required this.firebaseSettings,
@@ -128,7 +131,7 @@ class MessagesViewModel with ChangeNotifier {
       Message newLastMessage = isLastMessage ? _messages[1] : _messages[0];
       try {
         //newLastMessage.contactUser = _contactUser;
-        MessagesDatabaseResult result =
+        MessageDatabaseResult result =
             await _messagesDatabaseRepository.deleteMessage(
                 _currentDatabaseUserId!,
                 messageToDelete,
@@ -174,36 +177,52 @@ class MessagesViewModel with ChangeNotifier {
     BuildContext context,
     File imageFile,
   ) async {
-    // TODO: Open when implemet repository ** Important **
-    /*LoadingAlertDialog dialog =
-        LoadingAlertDialog(loadingText: Sentences.uploadingImage());
-    DialogHelper.show(context, dialog, barrierDismissible: false);
-    try {
-      String randomId = Message.generateRandomId();
-      String imageUrl = await _storageRepository.uploadMessageImage(
-          _currentDatabaseUserId,
-          _contactUserId,
+    if (_currentDatabaseUserId != null) {
+      // TODO: Open when implement repository ** Important **
+      LoadingAlertDialog dialog = LoadingAlertDialog(
+        loadingText: languageSettings.uploadingImage,
+      );
+      try {
+        DialogHelper.show(context, dialog, barrierDismissible: false);
+        String randomId = Message.generateRandomId();
+        String? imageUrl = await _storageRepository.uploadMessageImage(
+          _currentDatabaseUserId!,
+          _contactUser.userId,
           randomId,
-          imageFile);
-      dialog.cancel(context);
-      if (imageUrl != null && imageUrl.trim().isNotEmpty) {
-        return await sendMessage(imageUrl,
-            messageType: Message.MESSAGE_TYPE_IMAGE, randomIdParam: randomId);
-      } else {
-        print("MessagesViewModel / sendImageMessage : Image url is null");
+          imageFile,
+        );
+        dialog.cancel(context);
+        if (imageUrl != null && imageUrl.trim().isNotEmpty) {
+          return await sendMessage(
+            imageUrl,
+            messageType: Message.MESSAGE_TYPE_IMAGE,
+            randomIdParam: randomId,
+          );
+        } else {
+          print("MessagesViewModel / sendImageMessage : Image url is null");
+          return null;
+        }
+      } catch (e) {
+        dialog.cancel(context);
+        print("MessagesViewModel / sendImageMessage : ${e.toString()}");
         return null;
       }
-    } catch (e) {
-      dialog.cancel(context);
-      print("MessagesViewModel / sendImageMessage : ${e.toString()}");
-      return null;
-    }*/
+    }
   }
 
-  Future<void> sendMessage(String messageBody) async {
-    Message? newLastMessage = await _sendMessage(messageBody);
+  Future<Message?> sendMessage(
+    String messageBody, {
+    String randomIdParam = '',
+    int messageType = Message.MESSAGE_TYPE_TEXT,
+  }) async {
+    Message? newLastMessage = await _sendMessage(
+      messageBody,
+      randomIdParam: randomIdParam,
+      messageType: messageType,
+    );
     //contactsViewModel.updateLastMessageCallback(newLastMessage);
     //contactsViewModel.updateMessageStatusCallback(newLastMessage);
+    return newLastMessage;
   }
 
   Future<Message?> _sendMessage(
@@ -228,9 +247,9 @@ class MessagesViewModel with ChangeNotifier {
       _messages.insert(0, m);
       notifyListeners();
       try {
-        MessagesDatabaseResult result = await _messagesDatabaseRepository
+        MessageDatabaseResult result = await _messagesDatabaseRepository
             .sendMessage(_currentDatabaseUserId!, m);
-        if (result == MessagesDatabaseResult.Success) {
+        if (result == MessageDatabaseResult.Success) {
           //m.status = Message.STATUS_SENT;
           _sendNotification(m.messageBody);
         } else {

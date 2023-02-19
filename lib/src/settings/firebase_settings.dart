@@ -10,16 +10,17 @@ class FirebaseSettings implements SettingsBase {
   final String defaultUsername;
   final String defaultProfilePhotoUrl;
   final String defaultNotificationId;
-  final bool firestorePersistenceEnabledCustomUser;
+  final bool firestorePersistenceEnabledUser;
 
-  // Messages Database Settings
+  // Message Database Settings
   final String messagesCollectionName;
   final String messagesOfUserCollectionName;
   final String contactsCollectionName;
   final bool firestorePersistenceEnabledMessages;
 
   // Firebase Storage Settings
-  final String storageMessagesFolderName;
+  final String usersFolderName;
+  final String messagesFolderName;
 
   // Firebase Cloud Messaging Settings
   final FcmSettings? fcmSettings;
@@ -36,8 +37,9 @@ class FirebaseSettings implements SettingsBase {
     this.messagesCollectionName = 'messages',
     this.contactsCollectionName = 'contacts',
     this.messagesOfUserCollectionName = 'messages',
-    this.storageMessagesFolderName = 'messages',
-    this.firestorePersistenceEnabledCustomUser = false,
+    this.usersFolderName = 'users',
+    this.messagesFolderName = 'messages',
+    this.firestorePersistenceEnabledUser = false,
     this.firestorePersistenceEnabledMessages = false,
     this.fcmSettings,
   });

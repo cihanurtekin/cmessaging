@@ -1,12 +1,12 @@
-import 'package:c_messaging/src/helper/locator.dart';
-import 'package:c_messaging/src/helper/repositories.dart';
-import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/debug_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
+import 'package:c_messaging/src/tools/locator.dart';
+import 'package:c_messaging/src/tools/repositories.dart';
 import 'package:c_messaging/src/view/contacts_page.dart';
 import 'package:c_messaging/src/view/messages_page.dart';
 import 'package:c_messaging/src/view_model/contacts_view_model.dart';
@@ -29,14 +29,14 @@ class CMessaging {
 
   String? _userId;
 
-  late Repositories _repositories;
+  Repositories? _repositories;
 
-  late ServiceSettings _serviceSettings;
-  late FirebaseSettings _firebaseSettings;
-  late DebugSettings _debugSettings;
-  late ContactsPageSettings _contactsPageSettings;
-  late MessagesPageSettings _messagesPageSettings;
-  late LanguageSettings _languageSettings;
+  ServiceSettings? _serviceSettings;
+  FirebaseSettings? _firebaseSettings;
+  DebugSettings? _debugSettings;
+  ContactsPageSettings? _contactsPageSettings;
+  MessagesPageSettings? _messagesPageSettings;
+  LanguageSettings? _languageSettings;
 
   set serviceSettings(ServiceSettings value) {
     _serviceSettings = value;
@@ -58,7 +58,8 @@ class CMessaging {
     _languageSettings = value;
   }
 
-  init(BuildContext context, {
+  init(
+    BuildContext context, {
     required String userId,
     required ServiceSettings serviceSettings,
     required FirebaseSettings firebaseSettings,
@@ -82,16 +83,24 @@ class CMessaging {
   }
 
   _initRepositories(BuildContext context) {
-    _repositories = Repositories(
-      debugSettings: _debugSettings,
-      firebaseSettings: _firebaseSettings,
-      serviceSettings: _serviceSettings,
-    );
-    _repositories.createAll(context);
+    if (_debugSettings != null &&
+        _firebaseSettings != null &&
+        _serviceSettings != null) {
+      _repositories = Repositories(
+        debugSettings: _debugSettings!,
+        firebaseSettings: _firebaseSettings!,
+        serviceSettings: _serviceSettings!,
+      );
+      _repositories?.createAll(context);
+    }
   }
 
   pushContactsPage(BuildContext context) {
-    if (isInitialized) {
+    if (isInitialized &&
+        _contactsPageSettings != null &&
+        _messagesPageSettings != null &&
+        _firebaseSettings != null &&
+        _languageSettings != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -99,14 +108,17 @@ class CMessaging {
             create: (context) => ContactsViewModel(
               userId: _userId!,
               paginationLimitForFirstQuery:
-                  _contactsPageSettings.paginationLimitForFirstQuery,
+                  _contactsPageSettings!.paginationLimitForFirstQuery,
               paginationLimitForOtherQueries:
-                  _contactsPageSettings.paginationLimitForOtherQueries,
-              messagesPageSettings: _messagesPageSettings,
-              firebaseSettings: _firebaseSettings,
-              languageSettings: _languageSettings,
+                  _contactsPageSettings!.paginationLimitForOtherQueries,
+              messagesPageSettings: _messagesPageSettings!,
+              firebaseSettings: _firebaseSettings!,
+              languageSettings: _languageSettings!,
             ),
-            child: MessageContactsPage(_contactsPageSettings),
+            child: MessageContactsPage(
+              _contactsPageSettings!,
+              _languageSettings!,
+            ),
           ),
         ),
       );
@@ -120,13 +132,16 @@ class CMessaging {
     String contactProfilePhotoUrl,
     String contactNotificationId,
   ) {
-    CustomUser contactUser = CustomUser(
+    User contactUser = User(
       userId: contactUserId,
       username: contactUsername,
       profilePhotoUrl: contactProfilePhotoUrl,
       notificationId: contactNotificationId,
     );
-    if (isInitialized) {
+    if (isInitialized &&
+        _messagesPageSettings != null &&
+        _firebaseSettings != null &&
+        _languageSettings != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -135,13 +150,13 @@ class CMessaging {
               userId: _userId!,
               contactUser: contactUser,
               paginationLimitForFirstQuery:
-                  _messagesPageSettings.paginationLimitForFirstQuery,
+                  _messagesPageSettings!.paginationLimitForFirstQuery,
               paginationLimitForOtherQueries:
-                  _messagesPageSettings.paginationLimitForOtherQueries,
-              firebaseSettings: _firebaseSettings,
-              languageSettings: _languageSettings,
+                  _messagesPageSettings!.paginationLimitForOtherQueries,
+              firebaseSettings: _firebaseSettings!,
+              languageSettings: _languageSettings!,
             ),
-            child: MessagesPage(_messagesPageSettings),
+            child: MessagesPage(_messagesPageSettings!, _languageSettings!),
           ),
         ),
       );

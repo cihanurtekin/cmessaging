@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:c_messaging/src/base/messages_database_base.dart';
-import 'package:c_messaging/src/helper/locator.dart';
+import 'package:c_messaging/src/base/message_database_base.dart';
+import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
-import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
-import 'package:c_messaging/src/repository/custom_user_database_repository.dart';
-import 'package:c_messaging/src/repository/messages_database_repository.dart';
+import 'package:c_messaging/src/repository/user_database_repository.dart';
+import 'package:c_messaging/src/repository/message_database_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
@@ -50,10 +50,10 @@ class ContactsViewModel with ChangeNotifier {
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  MessagesDatabaseRepository _messagesDatabaseRepository =
-      locator<MessagesDatabaseRepository>();
-  CustomUserDatabaseRepository _customUserDatabaseRepository =
-      locator<CustomUserDatabaseRepository>();
+  MessageDatabaseRepository _messagesDatabaseRepository =
+      locator<MessageDatabaseRepository>();
+  UserDatabaseRepository _userDatabaseRepository =
+      locator<UserDatabaseRepository>();
 
   final int paginationLimitForFirstQuery;
   final int paginationLimitForOtherQueries;
@@ -109,10 +109,10 @@ class ContactsViewModel with ChangeNotifier {
         );
 
         for (Message m in messageListAndLastMessage[0]) {
-          CustomUser? customUser = await _customUserDatabaseRepository.getUser(
+          User? user = await _userDatabaseRepository.getUser(
             m.contactId,
           );
-          m.contactUser = customUser;
+          m.contactUser = user;
         }
 
         messages.addAll(messageListAndLastMessage[0]);
@@ -138,10 +138,14 @@ class ContactsViewModel with ChangeNotifier {
     return result;
   }
 
-  Future<MessagesDatabaseResult> deleteMessage(String currentUserId,
-      Message message, bool isLastMessage, Message newLastMessage) {
+  Future<MessageDatabaseResult> deleteMessage(
+    String currentUserId,
+    Message message,
+    bool isLastMessage,
+    Message newLastMessage,
+  ) {
     // TODO: implement deleteMessage
-    return Future.value(MessagesDatabaseResult.Error);
+    return Future.value(MessageDatabaseResult.Error);
   }
 
   Message? getMessageWithIndex(int index) {
@@ -159,10 +163,10 @@ class ContactsViewModel with ChangeNotifier {
     );
   }
 
-  Future<MessagesDatabaseResult> deleteAllMessagesOfContactWithIndex(
+  Future<MessageDatabaseResult> deleteAllMessagesOfContactWithIndex(
     int index,
   ) async {
-    MessagesDatabaseResult result = MessagesDatabaseResult.Error;
+    MessageDatabaseResult result = MessageDatabaseResult.Error;
     Message? messageToDelete = getMessageWithIndex(index);
     if (_currentDatabaseUserId != null && messageToDelete != null) {
       state = ContactsViewState.Deleting;
@@ -202,7 +206,7 @@ class ContactsViewModel with ChangeNotifier {
       Message messageToAdd = newMessage;
       for (Message m in _messages) {
         if (m.contactId == messageToAdd.contactId) {
-          CustomUser? contactUser = m.contactUser;
+          User? contactUser = m.contactUser;
           messageToAdd.contactUser = contactUser;
           contactIdToRemove = m.contactId;
           break;
@@ -240,7 +244,7 @@ class ContactsViewModel with ChangeNotifier {
   void openMessagesPage(BuildContext context, int index) {
     Message? message = getMessageWithIndex(index);
     if (_currentDatabaseUserId != null && message != null) {
-      CustomUser? contactUser = message.contactUser;
+      User? contactUser = message.contactUser;
       if (contactUser != null) {
         Navigator.push(
           context,
@@ -256,7 +260,7 @@ class ContactsViewModel with ChangeNotifier {
                 firebaseSettings: firebaseSettings,
                 languageSettings: languageSettings,
               ),
-              child: MessagesPage(messagesPageSettings),
+              child: MessagesPage(messagesPageSettings, languageSettings),
             ),
           ),
         );
@@ -264,7 +268,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  void onBackButtonPressed(BuildContext context){
+  void onBackButtonPressed(BuildContext context) {
     Navigator.pop(context);
   }
 }

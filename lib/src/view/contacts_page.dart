@@ -3,6 +3,7 @@ import 'package:c_messaging/src/custom_widgets/profile_photo.dart';
 import 'package:c_messaging/src/custom_widgets/shimmer.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
+import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/view_model/contacts_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -15,7 +16,9 @@ class MessageContactsPage extends StatelessWidget {
 
   final ContactsPageSettings _pageSettings;
 
-  MessageContactsPage(this._pageSettings) {
+  final LanguageSettings _languageSettings;
+
+  MessageContactsPage(this._pageSettings, this._languageSettings) {
     initializeDateFormatting();
   }
 
@@ -42,7 +45,7 @@ class MessageContactsPage extends StatelessWidget {
         },
       ),
       title: Text(
-        _pageSettings.contactsPageTitle,
+        _languageSettings.contactsPageTitle,
         style: TextStyle(
           color: _pageSettings.titleTextColor,
         ),
@@ -69,7 +72,7 @@ class MessageContactsPage extends StatelessWidget {
   Widget _buildNoMessageBody() {
     return NoMessageBackground(
       assetImagePath: _pageSettings.noMessageAssetImagePath,
-      textContent: _pageSettings.noMessageTextContent,
+      textContent: _languageSettings.contactsPageNoMessageTextContent,
       imageWidth: _pageSettings.noMessageImageWidth,
       textSize: _pageSettings.noMessageTextSize,
     );
@@ -91,7 +94,7 @@ class MessageContactsPage extends StatelessWidget {
           ),
           SizedBox(height: 18.0),
           Text(
-            _pageSettings.errorTryAgainMessage,
+            _languageSettings.contactsPageErrorTryAgainMessage,
             style: TextStyle(fontSize: _pageSettings.errorMessageTextSize),
           ),
         ],
@@ -187,7 +190,8 @@ class MessageContactsPage extends StatelessWidget {
                                         : Text(
                                             message.contactUser?.username
                                                     .trim() ??
-                                                _pageSettings.defaultUsername,
+                                                _languageSettings
+                                                    .contactsPageDefaultUsername,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -278,7 +282,7 @@ class MessageContactsPage extends StatelessWidget {
         Expanded(
           child: Text(
             message.messageType == Message.MESSAGE_TYPE_IMAGE
-                ? _pageSettings.imageTypeText
+                ? _languageSettings.contactsPageImageTypeText
                 : message.messageBody,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

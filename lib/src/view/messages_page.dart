@@ -1,8 +1,9 @@
 import 'package:c_messaging/src/custom_widgets/message_photo.dart';
 import 'package:c_messaging/src/custom_widgets/profile_photo.dart';
-import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
+import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/view_model/messages_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +16,9 @@ class MessagesPage extends StatelessWidget {
 
   final MessagesPageSettings _pageSettings;
 
-  MessagesPage(this._pageSettings);
+  final LanguageSettings _languageSettings;
+
+  MessagesPage(this._pageSettings, this._languageSettings);
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +37,11 @@ class MessagesPage extends StatelessWidget {
   }
 
   AppBar _buildAppBar(BuildContext context) {
-    MessagesViewModel viewModel =
-        Provider.of<MessagesViewModel>(context, listen: false);
-    CustomUser contactUser = viewModel.contactUser;
+    MessagesViewModel viewModel = Provider.of<MessagesViewModel>(
+      context,
+      listen: false,
+    );
+    User contactUser = viewModel.contactUser;
     return AppBar(
       title: Row(
         children: <Widget>[
@@ -53,7 +58,7 @@ class MessagesPage extends StatelessWidget {
             child: Text(
               contactUser.username.isNotEmpty
                   ? contactUser.username
-                  : _pageSettings.defaultUsernameForContactTitle,
+                  : _languageSettings.messagesPageDefaultUsernameForContactTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -397,5 +402,4 @@ class MessagesPage extends StatelessWidget {
     });
   }
   */
-
 }

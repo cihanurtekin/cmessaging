@@ -63,14 +63,17 @@ class PhotoPicker {
   Future<File?> _getImage(ImageSource? source) async {
     if (source != null) {
       ImagePicker imagePicker = ImagePicker();
-      PickedFile? pickedFile = await imagePicker.getImage(
+      XFile? pickedFile = await imagePicker.pickImage(
         source: source,
         maxWidth: _maxImageWidth,
       );
 
       if (pickedFile != null) {
-        File file = File(pickedFile.path);
-        return file;
+        // TODO: Implement crop
+        return /*cropImage
+            ? await _cropImage(context, pickedFile.path)
+            :*/
+            File(pickedFile.path);
       }
     }
     return null;

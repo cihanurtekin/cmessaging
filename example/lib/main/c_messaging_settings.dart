@@ -4,8 +4,9 @@ import 'package:example/main/custom_firebase_settings.dart';
 class CMessagingSettings {
   static ServiceSettings serviceSettings = ServiceSettings(
     userDatabaseServiceMode: UserDatabaseServiceMode.Firestore,
-    messagesDatabaseServiceMode: MessagesDatabaseServiceMode.Firestore,
+    messagesDatabaseServiceMode: MessageDatabaseServiceMode.Firestore,
     notificationServiceMode: NotificationServiceMode.FirebaseCloudMessaging,
+    storageServiceMode: StorageServiceMode.FirebaseStorage,
   );
 
   static FirebaseSettings firebaseSettings = FirebaseSettings(

@@ -1,50 +1,29 @@
-import 'package:c_messaging/src/base/messages_database_base.dart';
-import 'package:c_messaging/src/helper/locator.dart';
+import 'package:c_messaging/src/base/message_database_base.dart';
+import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/message.dart';
-import 'package:c_messaging/src/service/base/messages_database_service.dart';
-import 'package:c_messaging/src/service/messages_database_service_debug.dart';
-import 'package:c_messaging/src/service/messages_database_service_firestore.dart';
+import 'package:c_messaging/src/service/base/message_database_service.dart';
+import 'package:c_messaging/src/service/firebase/firestore_message_database_service.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 
-class MessagesDatabaseRepository implements MessagesDatabaseBase {
-  late MessagesDatabaseService _service;
+class MessageDatabaseRepository implements MessageDatabaseBase {
+  MessageDatabaseService _service = locator<FirestoreMessageDatabaseService>();
 
   @override
   void initialize(SettingsBase settings) {
     if (settings is ServiceSettings) {
       if (settings.userDatabaseServiceMode ==
           UserDatabaseServiceMode.Firestore) {
-        _service = locator<FirestoreMessagesDatabaseService>();
+        _service = locator<FirestoreMessageDatabaseService>();
       } else {
-        _service = locator<DebugMessagesDatabaseService>();
+        //_service = locator<DebugMessagesDatabaseService>();
       }
     }
   }
 
   @override
-  Future<MessagesDatabaseResult> deleteMessage(
-    String currentUserId,
-    Message message,
-    bool isLastMessage,
-    Message newLastMessage,
-  ) async {
-    return await _service.deleteMessage(
-      currentUserId,
-      message,
-      isLastMessage,
-      newLastMessage,
-    );
-  }
-
-  @override
-  Future<Message?> getMessage(String currentUserId, String messageUid) {
-    return _service.getMessage(currentUserId, messageUid);
-  }
-
-  @override
-  Future<MessagesDatabaseResult> sendMessage(
+  Future<MessageDatabaseResult> sendMessage(
     String currentUserId,
     Message message,
   ) async {
@@ -54,6 +33,11 @@ class MessagesDatabaseRepository implements MessagesDatabaseBase {
     );
     m.status = Message.STATUS_SENT;
     return await _service.sendMessage(currentUserId, m);
+  }
+
+  @override
+  Future<Message?> getMessage(String currentUserId, String messageUid) {
+    return _service.getMessage(currentUserId, messageUid);
   }
 
   @override
@@ -91,7 +75,22 @@ class MessagesDatabaseRepository implements MessagesDatabaseBase {
   }
 
   @override
-  Future<MessagesDatabaseResult> deleteAllMessagesOfContact(
+  Future<MessageDatabaseResult> deleteMessage(
+    String currentUserId,
+    Message message,
+    bool isLastMessage,
+    Message newLastMessage,
+  ) async {
+    return await _service.deleteMessage(
+      currentUserId,
+      message,
+      isLastMessage,
+      newLastMessage,
+    );
+  }
+
+  @override
+  Future<MessageDatabaseResult> deleteAllMessagesOfContact(
     String currentUserId,
     String contactUid,
   ) async {
@@ -102,22 +101,22 @@ class MessagesDatabaseRepository implements MessagesDatabaseBase {
   }
 
   @override
-  Stream<List<Message?>> addListenerToMessages(
+  Stream<List<Message?>> addListenerToContacts(
     String currentUserId,
     contactId,
   ) {
-    return _service.addListenerToMessages(
+    return _service.addListenerToContacts(
       currentUserId,
       contactId,
     );
   }
 
   @override
-  Stream<List<Message?>> addListenerToContacts(
+  Stream<List<Message?>> addListenerToMessages(
     String currentUserId,
     contactId,
   ) {
-    return _service.addListenerToContacts(
+    return _service.addListenerToMessages(
       currentUserId,
       contactId,
     );

@@ -2,13 +2,15 @@ import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 
 class ServiceSettings implements SettingsBase {
-  final MessagesDatabaseServiceMode messagesDatabaseServiceMode;
+  final MessageDatabaseServiceMode messagesDatabaseServiceMode;
   final UserDatabaseServiceMode userDatabaseServiceMode;
   final NotificationServiceMode notificationServiceMode;
+  final StorageServiceMode storageServiceMode;
 
   ServiceSettings({
     required this.messagesDatabaseServiceMode,
     required this.userDatabaseServiceMode,
     required this.notificationServiceMode,
+    required this.storageServiceMode,
   });
 }

@@ -1,9 +1,8 @@
 import 'package:c_messaging/src/base/notification_base.dart';
-import 'package:c_messaging/src/helper/locator.dart';
+import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/service/base/notification_service.dart';
-import 'package:c_messaging/src/service/notification_service_debug.dart';
-import 'package:c_messaging/src/service/notification_service_fcm.dart';
+import 'package:c_messaging/src/service/firebase/fcm_notification_service.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +17,7 @@ class NotificationRepository implements NotificationBase {
           UserDatabaseServiceMode.Firestore) {
         _service = locator<FcmNotificationService>();
       } else {
-        _service = locator<DebugNotificationService>();
+        //_service = locator<DebugNotificationService>();
       }
     }
   }

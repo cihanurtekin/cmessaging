@@ -1,4 +1,4 @@
-import 'package:c_messaging/src/model/custom_user.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:uuid/uuid.dart';
 
 enum MessageFileStatus { Loading, Loaded, Error }
@@ -35,7 +35,7 @@ class Message {
   late int messageType;
   late String randomId = Uuid().v4();
 
-  CustomUser? contactUser;
+  User? contactUser;
 
   Message({
     this.messageId = '',

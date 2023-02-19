@@ -1,10 +1,10 @@
-class CustomUser {
+class User {
   String userId;
   String username;
   String profilePhotoUrl;
   String notificationId;
 
-  CustomUser({
+  User({
     required this.userId,
     required this.username,
     required this.profilePhotoUrl,
@@ -13,7 +13,6 @@ class CustomUser {
 
   @override
   String toString() {
-    return 'CustomUser{userId: $userId, profilePhotoUrl: $profilePhotoUrl, '
-        'username: $username, notificationId: $notificationId}';
+    return 'User{userId: $userId, username: $username, profilePhotoUrl: $profilePhotoUrl, notificationId: $notificationId}';
   }
 }
