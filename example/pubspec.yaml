@@ -28,6 +28,8 @@ dependencies:
 
   firebase_auth: ^4.2.6
   shared_preferences: ^2.0.17
+  
+  http: ^0.13.5
 
 dev_dependencies:
   flutter_test:
