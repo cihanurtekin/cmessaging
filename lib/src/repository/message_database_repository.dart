@@ -31,7 +31,7 @@ class MessageDatabaseRepository implements MessageDatabaseBase {
       message.messageId,
       message.toMap(),
     );
-    m.status = Message.STATUS_SENT;
+    m.sendStatus = MessageSendStatus.sent;
     return await _service.sendMessage(currentUserId, m);
   }
 
@@ -41,37 +41,20 @@ class MessageDatabaseRepository implements MessageDatabaseBase {
   }
 
   @override
-  Future<List> getMessagesAndLastMessageWithPagination(
+  Future<List> getMessages(
     String currentUserId,
     String contactId,
     ListType listType,
-    lastMessageToStartAfter,
+    lastItemToStartAfter,
     int paginationLimit,
   ) async {
-    List messageListAndLastMessage;
-    //List<CMessage> messageList = [];
-    messageListAndLastMessage =
-        await _service.getMessagesAndLastMessageWithPagination(
+    return await _service.getMessages(
       currentUserId,
       contactId,
       listType,
-      lastMessageToStartAfter,
+      lastItemToStartAfter,
       paginationLimit,
     );
-    /*
-    if (listType == ListType.Contacts) {
-      for (Message m in messageListAndLastMessage[0]) {
-        await _userDatabaseRepository.getUser(m.contactId).then((user) {
-          if (user != null) {
-            m.contactUser = user;
-          } else {
-            print("MessagesDatabaseRepository / getMessagesAndLastMessageWithPagination : User null");
-          }
-        });
-      }
-    }
-    */
-    return messageListAndLastMessage;
   }
 
   @override

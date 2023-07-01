@@ -1,6 +1,5 @@
 import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
-import 'package:c_messaging/src/settings/debug_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
@@ -33,7 +32,6 @@ class CMessaging {
 
   ServiceSettings? _serviceSettings;
   FirebaseSettings? _firebaseSettings;
-  DebugSettings? _debugSettings;
   ContactsPageSettings? _contactsPageSettings;
   MessagesPageSettings? _messagesPageSettings;
   LanguageSettings? _languageSettings;
@@ -63,7 +61,6 @@ class CMessaging {
     required String userId,
     required ServiceSettings serviceSettings,
     required FirebaseSettings firebaseSettings,
-    DebugSettings? debugSettings,
     ContactsPageSettings? contactsPageSettings,
     MessagesPageSettings? messagesPageSettings,
     LanguageSettings? languageSettings,
@@ -71,7 +68,6 @@ class CMessaging {
     _userId = userId;
     _serviceSettings = serviceSettings;
     _firebaseSettings = firebaseSettings;
-    _debugSettings = debugSettings ?? DebugSettings();
     _contactsPageSettings = contactsPageSettings ?? ContactsPageSettings();
     _messagesPageSettings = messagesPageSettings ?? MessagesPageSettings();
     _languageSettings = languageSettings ?? LanguageSettings();
@@ -83,11 +79,9 @@ class CMessaging {
   }
 
   _initRepositories(BuildContext context) {
-    if (_debugSettings != null &&
-        _firebaseSettings != null &&
+    if (_firebaseSettings != null &&
         _serviceSettings != null) {
       _repositories = Repositories(
-        debugSettings: _debugSettings!,
         firebaseSettings: _firebaseSettings!,
         serviceSettings: _serviceSettings!,
       );

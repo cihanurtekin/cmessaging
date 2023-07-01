@@ -1,12 +1,19 @@
 import 'package:c_messaging/src/base/message_database_base.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/message.dart';
+import 'package:c_messaging/src/model/user.dart';
+import 'package:c_messaging/src/repository/user_database_repository.dart';
 import 'package:c_messaging/src/service/base/message_database_service.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
+import 'package:c_messaging/src/tools/locator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class FirestoreMessageDatabaseService implements MessageDatabaseService {
+  final UserDatabaseRepository _userDatabaseRepository =
+      locator<UserDatabaseRepository>();
+
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   FirebaseSettings? _firebaseSettings;
 
@@ -44,10 +51,10 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
           _getFirestoreContactDocument(message.receiverId, message.senderId);
       DocumentReference docRefSenderMessages = docRefSender
           .collection(_firebaseSettings!.messagesOfUserCollectionName)
-          .doc();
+          .doc(message.messageId);
       DocumentReference docRefReceiverMessages = docRefReceiver
           .collection(_firebaseSettings!.messagesOfUserCollectionName)
-          .doc();
+          .doc(message.messageId);
 
       await _firestore.runTransaction((transaction) {
         return transaction.get(docRefSender).then((snapshot) {
@@ -87,25 +94,24 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
   }
 
   @override
-  Future<List> getMessagesAndLastMessageWithPagination(
+  Future<List> getMessages(
     String currentUserId,
     String contactId,
     ListType listType,
-    lastMessageToStartAfter,
+    lastItemToStartAfter,
     int paginationLimit,
   ) async {
-    DocumentSnapshot<Map<String, dynamic>>? lastMessageDocument;
-    if (lastMessageToStartAfter != null) {
+    DocumentSnapshot<Map<String, dynamic>>? lastDocument;
+    if (lastItemToStartAfter != null) {
       try {
-        lastMessageDocument =
-            lastMessageToStartAfter as DocumentSnapshot<Map<String, dynamic>>;
+        lastDocument =
+            lastItemToStartAfter as DocumentSnapshot<Map<String, dynamic>>;
       } catch (e) {
         return [];
       }
     }
 
-    List<Message> messages = [];
-    //int paginationLimit = paginationLimitContacts;
+    List<Message> result = [];
 
     if (_firebaseSettings != null) {
       CollectionReference<Map<String, dynamic>> colRef = _firestore
@@ -113,20 +119,19 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
           .doc(currentUserId)
           .collection(_firebaseSettings!.contactsCollectionName);
 
-      if (listType == ListType.Messages) {
+      if (listType == ListType.messages) {
         colRef = colRef
             .doc(contactId)
             .collection(_firebaseSettings!.messagesOfUserCollectionName);
-        //paginationLimit = paginationLimitMessages;
       }
 
       Query<Map<String, dynamic>> query = colRef
-          .where(Message.deletedKey, isEqualTo: 0)
+          .where(Message.statusKey, isEqualTo: MessageStatus.active)
           .orderBy(Message.dateOfCreatedKey, descending: true)
           .limit(paginationLimit);
 
-      if (lastMessageDocument != null) {
-        query = query.startAfterDocument(lastMessageDocument);
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
       }
 
       QuerySnapshot<Map<String, dynamic>> qs = await query.get();
@@ -136,20 +141,27 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
           try {
             Message? m = getMessageFromDocumentSnapshot(doc);
             if (m != null) {
-              messages.add(m);
+              if (listType == ListType.contacts) {
+                User? user = await _userDatabaseRepository.getUser(
+                  m.contactId,
+                );
+                m.contactUser = user;
+              }
+              result.add(m);
             }
           } catch (e) {
-            print("FirestoreMessagesDatabaseService / "
-                "getMessagesAndLastMessageWithPagination : "
-                "${e.toString()}");
+            debugPrint(
+              'FirestoreMessagesDatabaseService / getMessages : '
+              '${e.toString()}',
+            );
             //messages = [];
             //break;
           }
         }
-        lastMessageDocument = qs.docs.last;
+        lastDocument = qs.docs.last;
       }
     }
-    return [List<Message>.from(messages), lastMessageDocument];
+    return [List<Message>.from(result), lastDocument];
   }
 
   Message? getMessageFromDocumentSnapshot(
@@ -188,7 +200,9 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
               .doc(message.messageId);
 
       //deleteBatch.delete(docRefMessage);
-      deleteBatch.set(docRefMessage, {Message.deletedKey: 1});
+      deleteBatch.set(docRefMessage, {
+        Message.statusKey: MessageStatus.deleted,
+      });
 
       if (isLastMessage) {
         DocumentReference docRefLastMessage =
@@ -235,16 +249,19 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
     if (_firebaseSettings != null) {
       await _getFirestoreContactDocument(userUid, contactUid)
           .collection(_firebaseSettings!.messagesOfUserCollectionName)
-          .where(Message.deletedKey, isEqualTo: 0)
+          .where(Message.statusKey, isEqualTo: MessageStatus.active)
           .orderBy(Message.dateOfCreatedKey, descending: false)
           .get()
           .then((snap) {
         for (DocumentSnapshot ds in snap.docs) {
           try {
-            ds.reference.set({Message.deletedKey: 1});
+            ds.reference.set({Message.statusKey: MessageStatus.deleted});
           } catch (e) {
             print(
-                "FirestoreMessagesDatabaseService / _deleteAllMessagesOfUserCollection : ${e.toString()}");
+              "FirestoreMessagesDatabaseService / "
+              "_deleteAllMessagesOfUserCollection : "
+              "${e.toString()}",
+            );
           }
         }
       });
@@ -261,7 +278,7 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
           .collection(_firebaseSettings!.messagesCollectionName)
           .doc(currentUserId)
           .collection(_firebaseSettings!.contactsCollectionName)
-          .where(Message.deletedKey, isEqualTo: 0)
+          .where(Message.statusKey, isEqualTo: MessageStatus.active)
           .orderBy(Message.dateOfCreatedKey, descending: true)
           .snapshots();
 
@@ -291,7 +308,7 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
       Stream<QuerySnapshot<Map<String, dynamic>>> qsStream =
           _getFirestoreContactDocument(currentUserId, contactId)
               .collection(_firebaseSettings!.messagesOfUserCollectionName)
-              .where(Message.deletedKey, isEqualTo: 0)
+              .where(Message.statusKey, isEqualTo: MessageStatus.active)
               .orderBy(Message.dateOfCreatedKey, descending: true)
               .limit(1)
               .snapshots();

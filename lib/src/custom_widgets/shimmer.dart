@@ -162,7 +162,6 @@ class _Shimmer extends SingleChildRenderObjectWidget {
   }
 }
 
-@visibleForTesting
 class _ShimmerFilter extends RenderProxyBox {
   final _clearPaint = Paint();
   final Paint _gradientPaint;

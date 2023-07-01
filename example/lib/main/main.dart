@@ -1,9 +1,7 @@
 import 'package:example/helper/custom_router.dart';
-import 'package:example/main/c_messaging_settings.dart';
 import 'package:example/main/home_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:c_messaging/c_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

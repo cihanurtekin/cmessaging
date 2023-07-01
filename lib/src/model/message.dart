@@ -1,103 +1,125 @@
 import 'package:c_messaging/src/model/user.dart';
-import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
 
 enum MessageFileStatus { Loading, Loaded, Error }
 
-class Message {
-  static const int STATUS_ERROR = -1;
-  static const int STATUS_WAITING = 10;
-  static const int STATUS_SENT = 11;
-  static const int STATUS_RECEIVED = 12;
-  static const int STATUS_SEEN = 13;
-
-  static const int MESSAGE_TYPE_TEXT = 20;
-  static const int MESSAGE_TYPE_IMAGE = 21;
-
+class Message with ChangeNotifier {
   static const String messageIdKey = 'messageId';
   static const String contactIdKey = 'contactId';
   static const String senderIdKey = 'senderId';
   static const String receiverIdKey = 'receiverId';
   static const String messageBodyKey = 'messageBody';
   static const String dateOfCreatedKey = 'dateOfCreated';
-  static const String deletedKey = 'deleted';
   static const String statusKey = 'status';
+  static const String sendStatusKey = 'sendStatus';
   static const String messageTypeKey = 'messageType';
-  static const String randomIdKey = 'randomId';
 
-  late String messageId;
-  late String contactId;
-  late String senderId;
-  late String receiverId;
-  late String messageBody;
-  late DateTime dateOfCreated;
-  late int deleted;
-  late int status;
-  late int messageType;
-  late String randomId = Uuid().v4();
+  //static const String randomIdKey = 'randomId';
+
+  String messageId;
+  String contactId;
+  String senderId;
+  String receiverId;
+  String messageBody;
+  DateTime dateOfCreated;
+  int status;
+  int sendStatus;
+  int messageType;
+
+  //String randomId = Uuid().v4();
 
   User? contactUser;
 
   Message({
-    this.messageId = '',
+    required this.messageId,
     this.contactId = '',
-    this.senderId = '',
-    this.receiverId = '',
-    this.messageBody = '',
+    required this.senderId,
+    required this.receiverId,
+    required this.messageBody,
     required this.dateOfCreated,
-    this.deleted = 0,
-    this.status = STATUS_WAITING,
-    this.messageType = MESSAGE_TYPE_TEXT,
-    randomIdParam = '',
-  }) {
-    if (randomIdParam != null && randomIdParam.trim().isNotEmpty) {
-      randomId = randomIdParam;
-    }
-  }
+    this.status = MessageStatus.active,
+    this.sendStatus = MessageSendStatus.waiting,
+    this.messageType = MessageType.text,
+  });
 
   Map<String, dynamic> toMap(
       {bool convertDateToMicrosecondsSinceEpoch = false}) {
     return {
-      messageIdKey: this.messageId,
-      contactIdKey: this.contactId,
-      senderIdKey: this.senderId,
-      receiverIdKey: this.receiverId,
-      messageBodyKey: this.messageBody,
+      messageIdKey: messageId,
+      contactIdKey: contactId,
+      senderIdKey: senderId,
+      receiverIdKey: receiverId,
+      messageBodyKey: messageBody,
       dateOfCreatedKey: convertDateToMicrosecondsSinceEpoch
-          ? this.dateOfCreated.microsecondsSinceEpoch
-          : this.dateOfCreated,
-      deletedKey: this.deleted,
-      statusKey: this.status,
-      messageTypeKey: this.messageType,
-      randomIdKey: this.randomId,
+          ? dateOfCreated.microsecondsSinceEpoch
+          : dateOfCreated,
+      statusKey: status,
+      sendStatusKey: sendStatus,
+      messageTypeKey: messageType,
     };
   }
 
-  Message.fromMap(String messageUid, Map<String, dynamic> map,
-      {bool getDateFromMicrosecondsSinceEpoch = false}) {
-    this.messageId = messageUid;
-    this.contactId = map[contactIdKey];
-    this.senderId = map[senderIdKey];
-    this.receiverId = map[receiverIdKey];
-    this.messageBody = map[messageBodyKey];
-    this.dateOfCreated = getDateFromMicrosecondsSinceEpoch
-        ? DateTime.fromMicrosecondsSinceEpoch(map[dateOfCreatedKey])
-        : map[dateOfCreatedKey];
-    this.deleted = map[deletedKey];
-    this.status = map[statusKey];
-    this.messageType = map[messageTypeKey];
-    this.randomId = map[randomIdKey];
+  Message.fromMap(this.messageId, Map<String, dynamic> map)
+      : contactId = map[contactIdKey] ?? '',
+        senderId = map[senderIdKey] ?? '',
+        receiverId = map[receiverIdKey] ?? '',
+        messageBody = map[messageBodyKey] ?? '',
+        dateOfCreated = map[dateOfCreatedKey],
+        status = map[statusKey] ?? MessageStatus.active,
+        sendStatus = map[sendStatusKey] ?? MessageSendStatus.waiting,
+        messageType = map[messageTypeKey] ?? MessageType.text;
+
+  void updateSendStatus(int newSendStatus) async {
+    sendStatus = newSendStatus;
+    notifyListeners();
   }
 
-  static String generateRandomId() {
-    return Uuid().v4();
+  void update(Map<String, dynamic> newValues) {
+    if (newValues.containsKey(messageIdKey)) {
+      messageId = newValues[messageIdKey];
+    }
+    if (newValues.containsKey(contactIdKey)) {
+      contactId = newValues[contactIdKey];
+    }
+    if (newValues.containsKey(senderIdKey)) {
+      senderId = newValues[senderIdKey];
+    }
+    if (newValues.containsKey(receiverIdKey)) {
+      receiverId = newValues[receiverIdKey];
+    }
+    if (newValues.containsKey(messageBodyKey)) {
+      messageBody = newValues[messageBodyKey];
+    }
+    if (newValues.containsKey(dateOfCreatedKey)) {
+      dateOfCreated = newValues[dateOfCreatedKey];
+    }
+    if (newValues.containsKey(statusKey)) {
+      status = newValues[statusKey];
+    }
+    if (newValues.containsKey(sendStatusKey)) {
+      sendStatus = newValues[sendStatusKey];
+    }
+    if (newValues.containsKey(messageTypeKey)) {
+      messageType = newValues[messageTypeKey];
+    }
+    notifyListeners();
   }
+}
 
-  @override
-  String toString() {
-    return 'Message{messageId: $messageId, contactId: $contactId, '
-        'senderId: $senderId, receiverId: $receiverId, '
-        'messageBody: $messageBody, dateOfCreated: $dateOfCreated, '
-        'deleted: $deleted, status: $status, messageType: $messageType, '
-        'randomId: $randomId, contactUser: $contactUser}';
-  }
+class MessageStatus {
+  static const int active = 1;
+  static const int deleted = -1;
+}
+
+class MessageSendStatus {
+  static const int error = -1;
+  static const int waiting = 0;
+  static const int sent = 1;
+  static const int received = 2;
+  static const int seen = 3;
+}
+
+class MessageType {
+  static const int text = 1;
+  static const int image = 2;
 }

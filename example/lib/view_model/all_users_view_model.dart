@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:example/model/user.dart';
 import 'package:flutter/material.dart';
-import 'package:c_messaging/c_messaging.dart';
 
 enum AllUsersViewState { Idle, Loading }
 

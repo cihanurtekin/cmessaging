@@ -15,16 +15,16 @@ import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:collection/collection.dart';
+import 'package:uuid/uuid.dart';
 
 enum MessagesViewState {
-  Idle,
-  LoadingFirstQuery,
-  LoadingOtherQueries,
-  UploadingImage,
-  Deleting,
-  Error
+  idle,
+  loadingFirstQuery,
+  loadingOtherQueries,
+  uploadingImage,
+  deleting,
+  error,
 }
 
 class MessagesViewModel with ChangeNotifier {
@@ -34,7 +34,11 @@ class MessagesViewModel with ChangeNotifier {
       locator<NotificationRepository>();
   StorageRepository _storageRepository = locator<StorageRepository>();
 
-  MessagesViewState _state = MessagesViewState.Idle;
+  final ScrollController _scrollController = ScrollController();
+
+  ScrollController get scrollController => _scrollController;
+
+  MessagesViewState _state = MessagesViewState.idle;
 
   MessagesViewState get state => _state;
 
@@ -43,115 +47,126 @@ class MessagesViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  StreamSubscription? _newMessageSubscription;
-
-  /// It prevents to duplicate the last message
-  //bool _listenFirstQuery = true;
-
-  String? _currentDatabaseUserId;
-  late User _contactUser;
-
-  User get contactUser => _contactUser;
-
   List<Message> _messages = [];
 
   List<Message> get messages => _messages;
 
-  dynamic _lastMessageToStartAfter;
+  dynamic _lastItemToStartAfter;
+
+  StreamSubscription? _newMessageSubscription;
+
+  final String _currentDatabaseUserId;
+
+  String get currentDatabaseUserId => _currentDatabaseUserId;
+
+  final User _contactUser;
+
+  User get contactUser => _contactUser;
 
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  final int paginationLimitForFirstQuery;
-  final int paginationLimitForOtherQueries;
+  final int _paginationLimitForFirstQuery;
+  final int _paginationLimitForOtherQueries;
 
   MessagesViewModel({
     required String userId,
     required User contactUser,
-    required this.paginationLimitForFirstQuery,
-    required this.paginationLimitForOtherQueries,
+    required int paginationLimitForFirstQuery,
+    required int paginationLimitForOtherQueries,
     required this.firebaseSettings,
     required this.languageSettings,
-  }) {
-    _currentDatabaseUserId = userId;
-    _contactUser = contactUser;
-    _getMessagesWithPagination(paginationLimitForFirstQuery).then((_) {
-      _addListener();
+  })  : _currentDatabaseUserId = userId,
+        _contactUser = contactUser,
+        _paginationLimitForFirstQuery = paginationLimitForFirstQuery,
+        _paginationLimitForOtherQueries = paginationLimitForOtherQueries {
+    _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _clearMessages();
+      _getMessages(_paginationLimitForFirstQuery);
     });
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      if (_state == MessagesViewState.idle) {
+        _state = MessagesViewState.loadingOtherQueries;
+        _getMessages(_paginationLimitForOtherQueries);
+      }
+    }
+  }
+
+  void _clearMessages() {
+    _messages = [];
+    _lastItemToStartAfter = null;
+  }
+
+  void refreshMessages() {
+    state = MessagesViewState.loadingFirstQuery;
+    _clearMessages();
+    _getMessages(_paginationLimitForFirstQuery);
+  }
+
+  void _getMessages(int paginationLimit) async {
+    try {
+      List messageList = await _messagesDatabaseRepository.getMessages(
+        _currentDatabaseUserId,
+        '',
+        ListType.contacts,
+        _lastItemToStartAfter,
+        paginationLimit,
+      );
+      _messages.addAll(
+        List.from(messageList[0]),
+      );
+      _lastItemToStartAfter = messageList[1];
+      if (_newMessageSubscription == null) {
+        _addListener();
+      }
+      state = MessagesViewState.idle;
+    } catch (e) {
+      debugPrint('MessagesViewModel / _getMessages: ${e.toString()}');
+      state = MessagesViewState.error;
+    }
   }
 
   @override
   dispose() {
     _newMessageSubscription?.cancel();
-    _messages.clear();
-    _lastMessageToStartAfter = null;
+    _clearMessages();
     super.dispose();
-  }
-
-  Future<void> getMessagesWithPagination() async {
-    await _getMessagesWithPagination(paginationLimitForOtherQueries);
-  }
-
-  Future<void> _getMessagesWithPagination(int paginationLimit) async {
-    List messageListAndLastMessage;
-
-    if (_currentDatabaseUserId != null) {
-      if (!hasMessage()) {
-        state = MessagesViewState.LoadingFirstQuery;
-      } else {
-        state = MessagesViewState.LoadingOtherQueries;
-      }
-      try {
-        messageListAndLastMessage = await _messagesDatabaseRepository
-            .getMessagesAndLastMessageWithPagination(
-          _currentDatabaseUserId!,
-          _contactUser.userId,
-          ListType.Messages,
-          _lastMessageToStartAfter,
-          paginationLimit,
-        );
-        _messages.addAll(messageListAndLastMessage[0]);
-        _lastMessageToStartAfter = messageListAndLastMessage[1];
-        state = MessagesViewState.Idle;
-      } catch (e) {
-        print(
-            "MessagesViewModel / getMessagesWithPagination : ${e.toString()}");
-        state = hasMessage() ? MessagesViewState.Idle : MessagesViewState.Error;
-      }
-    }
   }
 
   Future<Message?> deleteMessage(int index) async {
     Message messageToDelete = _messages[index];
     _messages.removeAt(index);
     //messages.removeWhere((m) => m.messageUid == messageToDelete.messageUid);
-    state = MessagesViewState.Deleting;
-    if (_currentDatabaseUserId != null) {
-      bool isLastMessage = index == 0;
-      Message newLastMessage = isLastMessage ? _messages[1] : _messages[0];
-      try {
-        //newLastMessage.contactUser = _contactUser;
-        MessageDatabaseResult result =
-            await _messagesDatabaseRepository.deleteMessage(
-                _currentDatabaseUserId!,
-                messageToDelete,
-                isLastMessage,
-                newLastMessage);
-        /*if (result == MessagesBaseResult.Success) {
-          messages
-              .removeWhere((m) => m.messageUid == messageToDelete.messageUid);
-        }*/
-      } catch (e) {
-        print("MessagesViewModel / deleteMessage : ${e.toString()}");
-      } finally {
-        state = MessagesViewState.Idle;
-      }
-      if (isLastMessage) {
-        //_contactsViewModel.updateLastMessageCallback(newLastMessage);
-      }
-      return newLastMessage;
+    state = MessagesViewState.deleting;
+    bool isLastMessage = index == 0;
+    Message newLastMessage = isLastMessage ? _messages[1] : _messages[0];
+    try {
+      //newLastMessage.contactUser = _contactUser;
+      MessageDatabaseResult result =
+          await _messagesDatabaseRepository.deleteMessage(
+              _currentDatabaseUserId,
+              messageToDelete,
+              isLastMessage,
+              newLastMessage);
+      /*if (result == MessagesBaseResult.Success) {
+        messages
+            .removeWhere((m) => m.messageUid == messageToDelete.messageUid);
+      }*/
+    } catch (e) {
+      print("MessagesViewModel / deleteMessage : ${e.toString()}");
+    } finally {
+      state = MessagesViewState.idle;
     }
-    return null;
+    if (isLastMessage) {
+      //_contactsViewModel.updateLastMessageCallback(newLastMessage);
+    }
+    return newLastMessage;
   }
 
   void sendImageMessage(BuildContext context) async {
@@ -177,47 +192,44 @@ class MessagesViewModel with ChangeNotifier {
     BuildContext context,
     File imageFile,
   ) async {
-    if (_currentDatabaseUserId != null) {
-      // TODO: Open when implement repository ** Important **
-      LoadingAlertDialog dialog = LoadingAlertDialog(
-        loadingText: languageSettings.uploadingImage,
+    LoadingAlertDialog dialog = LoadingAlertDialog(
+      loadingText: languageSettings.uploadingImage,
+    );
+    try {
+      DialogHelper.show(context, dialog, barrierDismissible: false);
+      String messageId = Uuid().v4();
+      String? imageUrl = await _storageRepository.uploadMessageImage(
+        _currentDatabaseUserId,
+        _contactUser.userId,
+        messageId,
+        imageFile,
       );
-      try {
-        DialogHelper.show(context, dialog, barrierDismissible: false);
-        String randomId = Message.generateRandomId();
-        String? imageUrl = await _storageRepository.uploadMessageImage(
-          _currentDatabaseUserId!,
-          _contactUser.userId,
-          randomId,
-          imageFile,
+      dialog.cancel(context);
+      if (imageUrl != null && imageUrl.trim().isNotEmpty) {
+        return await sendMessage(
+          imageUrl,
+          messageId: messageId,
+          messageType: MessageType.image,
         );
-        dialog.cancel(context);
-        if (imageUrl != null && imageUrl.trim().isNotEmpty) {
-          return await sendMessage(
-            imageUrl,
-            messageType: Message.MESSAGE_TYPE_IMAGE,
-            randomIdParam: randomId,
-          );
-        } else {
-          print("MessagesViewModel / sendImageMessage : Image url is null");
-          return null;
-        }
-      } catch (e) {
-        dialog.cancel(context);
-        print("MessagesViewModel / sendImageMessage : ${e.toString()}");
+      } else {
+        print("MessagesViewModel / sendImageMessage : Image url is null");
         return null;
       }
+    } catch (e) {
+      dialog.cancel(context);
+      print("MessagesViewModel / sendImageMessage : ${e.toString()}");
+      return null;
     }
   }
 
   Future<Message?> sendMessage(
     String messageBody, {
-    String randomIdParam = '',
-    int messageType = Message.MESSAGE_TYPE_TEXT,
+    String? messageId,
+    int messageType = MessageType.text,
   }) async {
     Message? newLastMessage = await _sendMessage(
+      messageId ?? Uuid().v4(),
       messageBody,
-      randomIdParam: randomIdParam,
       messageType: messageType,
     );
     //contactsViewModel.updateLastMessageCallback(newLastMessage);
@@ -226,34 +238,32 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   Future<Message?> _sendMessage(
+    String messageId,
     String messageBody, {
-    String randomIdParam = '',
-    int messageType = Message.MESSAGE_TYPE_TEXT,
+    int messageType = MessageType.text,
   }) async {
-    if (_currentDatabaseUserId != null &&
-        state == MessagesViewState.Idle &&
-        messageBody.trim().isNotEmpty) {
+    if (state == MessagesViewState.idle && messageBody.trim().isNotEmpty) {
       Message m = Message(
-        senderId: _currentDatabaseUserId!,
+        messageId: messageId,
+        senderId: _currentDatabaseUserId,
         receiverId: _contactUser.userId,
         messageBody: messageBody.trim(),
-        status: Message.STATUS_WAITING,
+        sendStatus: MessageSendStatus.waiting,
         // will be changed on the service
         dateOfCreated: DateTime.now(),
         messageType: messageType,
-        randomIdParam: randomIdParam,
       );
       m.contactUser = _contactUser;
       _messages.insert(0, m);
       notifyListeners();
       try {
         MessageDatabaseResult result = await _messagesDatabaseRepository
-            .sendMessage(_currentDatabaseUserId!, m);
+            .sendMessage(_currentDatabaseUserId, m);
         if (result == MessageDatabaseResult.Success) {
           //m.status = Message.STATUS_SENT;
           _sendNotification(m.messageBody);
         } else {
-          updateMessageStatus(m, Message.STATUS_ERROR);
+          updateMessageStatus(m, MessageSendStatus.error);
         }
         //notifyListeners();
       } catch (e) {
@@ -279,82 +289,31 @@ class MessagesViewModel with ChangeNotifier {
 
   Future<void> retryToSendMessage(int index, Message message) async {
     _messages.removeAt(index);
-    await sendMessage(message.messageBody);
-  }
-
-  Message? getMessageWithIndex(int index) {
-    if (hasMessage()) {
-      return _messages[index];
-    } else {
-      return null;
-    }
-  }
-
-  String getMessageDateText(BuildContext context, int index) {
-    return '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000))},' +
-        ' ${DateFormat.Hm(Localizations.localeOf(context).languageCode).format(getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000))}';
-  }
-
-  /*String date =
-        '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(message.dateOfCreated)},'
-        ' ${DateFormat.Hm(Localizations.localeOf(context).languageCode).format(message.dateOfCreated)}';
-    if (isUserSender) {
-      //date += '  \u2714';
-      //date += '  \u{1f553}';
-      //date += '  \u2b94';
-    }
-
-    return date;
-     */
-
-  int getMessageStatusWithMessageId(String messageId) {
-    if (hasMessage()) {
-      Message? m = _messages.firstWhereOrNull((m) => m.messageId == messageId);
-      if (m != null) {
-        return m.status;
-      }
-    }
-    return Message.STATUS_ERROR;
-  }
-
-  bool hasMessage() {
-    return _messages.length > 0;
-  }
-
-  bool isUserSender(int index) {
-    bool result = true;
-    Message? message = getMessageWithIndex(index);
-    if (_currentDatabaseUserId != null) {
-      result = message?.senderId == _currentDatabaseUserId;
-    }
-    return result;
+    await sendMessage(message.messageBody, messageId: message.messageId);
   }
 
   void _addListener() {
-    if (_currentDatabaseUserId != null) {
-      _newMessageSubscription = _messagesDatabaseRepository
-          .addListenerToMessages(_currentDatabaseUserId!, _contactUser.userId)
-          .listen((messageList) {
-        if (messageList.isNotEmpty) {
-          Message? newMessage = messageList[0];
+    _newMessageSubscription = _messagesDatabaseRepository
+        .addListenerToMessages(_currentDatabaseUserId, _contactUser.userId)
+        .listen((messageList) {
+      if (messageList.isNotEmpty) {
+        Message? newMessage = messageList[0];
 
-          if (newMessage != null) {
-            //if (_listenFirstQuery) {
-            //    _listenFirstQuery = false;
-            // } else {
-            newMessageHandler(newMessage);
-            // }
-          }
+        if (newMessage != null) {
+          //if (_listenFirstQuery) {
+          //    _listenFirstQuery = false;
+          // } else {
+          newMessageHandler(newMessage);
+          // }
         }
-      });
-    }
+      }
+    });
   }
 
   void updateMessageStatus(Message message, int status) {
     for (Message m in _messages) {
-      if (m.randomId == message.randomId) {
-        m.status = status;
-        notifyListeners();
+      if (m.messageId == message.messageId) {
+        m.updateSendStatus(status);
         return;
       }
     }
@@ -362,11 +321,13 @@ class MessagesViewModel with ChangeNotifier {
 
   void newMessageHandler(Message newMessage) {
     for (Message m in _messages) {
-      if (m.randomId == newMessage.randomId) {
-        m.messageId = newMessage.messageId;
-        m.status = newMessage.status;
-        m.dateOfCreated = newMessage.dateOfCreated;
-        notifyListeners();
+      if (m.messageId == newMessage.messageId) {
+        m.update({
+          Message.messageIdKey: newMessage.messageId,
+          Message.statusKey: newMessage.status,
+          Message.sendStatusKey: newMessage.sendStatus,
+          Message.dateOfCreatedKey: newMessage.dateOfCreated,
+        });
         return;
       }
     }
@@ -376,7 +337,7 @@ class MessagesViewModel with ChangeNotifier {
 
   bool isMessageAlreadyInList(Message message) {
     for (Message m in _messages) {
-      if (m.randomId == message.randomId) return true;
+      if (m.messageId == message.messageId) return true;
     }
     return false;
   }

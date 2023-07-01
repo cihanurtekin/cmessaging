@@ -4,6 +4,7 @@ import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
+import 'package:c_messaging/src/tools/converter.dart';
 import 'package:c_messaging/src/view_model/messages_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +23,6 @@ class MessagesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _addScrollListener(context);
     return WillPopScope(
       onWillPop: onPop,
       child: Scaffold(
@@ -49,8 +49,6 @@ class MessagesPage extends StatelessWidget {
           color: _pageSettings.backIconColor,
         ),
         onPressed: () {
-          MessagesViewModel viewModel =
-              Provider.of<MessagesViewModel>(context, listen: false);
           viewModel.onBackButtonPressed(context);
         },
       ),
@@ -118,27 +116,35 @@ class MessagesPage extends StatelessWidget {
 
   Widget _buildBodyAccordingToState() {
     return Expanded(
-      child: Consumer<MessagesViewModel>(builder: (context, viewModel, child) {
-        return viewModel.state == MessagesViewState.LoadingFirstQuery
-            ? Center(child: CircularProgressIndicator())
-            : viewModel.state == MessagesViewState.Error
-                ? FloatingActionButton(
-                    child: Icon(Icons.refresh),
-                    onPressed: () {
-                      viewModel.getMessagesWithPagination();
-                    })
-                : _buildListView();
-      }),
+      child: Consumer<MessagesViewModel>(
+        builder: (context, viewModel, child) {
+          return viewModel.state == MessagesViewState.loadingFirstQuery
+              ? Center(child: CircularProgressIndicator())
+              : viewModel.state == MessagesViewState.error
+                  ? FloatingActionButton(
+                      child: Icon(Icons.refresh),
+                      onPressed: () {
+                        viewModel.refreshMessages();
+                      },
+                    )
+                  : _buildListView();
+        },
+      ),
     );
   }
 
   Widget _buildListView() {
     return Consumer<MessagesViewModel>(
       builder: (context, viewModel, child) => ListView.builder(
+        reverse: true,
         controller: _controller,
         itemCount: viewModel.messages.length,
-        itemBuilder: _buildMessagesListTile,
-        reverse: true,
+        itemBuilder: (BuildContext context, int index) {
+          return ChangeNotifierProvider.value(
+            value: viewModel.messages[index],
+            child: _buildListTile(context, index),
+          );
+        },
       ),
     );
   }
@@ -172,120 +178,123 @@ class MessagesPage extends StatelessWidget {
   }
   */
 
-  Widget _buildMessagesListTile(BuildContext context, int index) {
-    MessagesViewModel viewModel =
-        Provider.of<MessagesViewModel>(context, listen: false);
-    Message? message = viewModel.getMessageWithIndex(index);
-    bool isUserSender = viewModel.isUserSender(index);
-    return message != null
-        ? ListTile(
-            contentPadding: EdgeInsets.only(
-                left: isUserSender
-                    ? _pageSettings.listTileMaxPadding
-                    : _pageSettings.listTileMinPadding,
-                right: isUserSender
-                    ? _pageSettings.listTileMinPadding
-                    : _pageSettings.listTileMaxPadding),
-            title: Card(
-              clipBehavior: Clip.antiAliasWithSaveLayer,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                      _pageSettings.listTileCornerRadius)),
-              child: Stack(
-                children: <Widget>[
-                  Container(
-                    padding: EdgeInsets.all(_pageSettings.messageTextPadding),
-                    color: isUserSender
-                        ? _pageSettings.senderMessageBackgroundColor
-                        : _pageSettings.receiverMessageBackgroundColor,
-                    child: Column(
-                      children: <Widget>[
-                        Align(
-                          alignment: isUserSender
-                              ? Alignment.topRight
-                              : Alignment.topLeft,
-                          child: message.messageType ==
-                                  Message.MESSAGE_TYPE_IMAGE
-                              ? MessagePhoto(
-                                  photo: message.messageBody,
-                                  placeholderImagePath:
-                                      _pageSettings.messagePhotoPlaceholderPath,
-                                )
-                              : Text(
-                                  message.messageBody,
-                                  style: TextStyle(
-                                      fontSize:
-                                          _pageSettings.messageBodyTextSize),
-                                ),
-                        ),
-                        SizedBox(height: 4.0),
-                        _buildDateRow(context, index),
-                      ],
-                    ),
+  Widget _buildListTile(BuildContext context, int index) {
+    MessagesViewModel viewModel = Provider.of<MessagesViewModel>(
+      context,
+      listen: false,
+    );
+    return Consumer<Message>(
+      builder: (context, message, child) {
+        bool isUserSender = message.senderId == viewModel.currentDatabaseUserId;
+        return ListTile(
+          contentPadding: EdgeInsets.only(
+              left: isUserSender
+                  ? _pageSettings.listTileMaxPadding
+                  : _pageSettings.listTileMinPadding,
+              right: isUserSender
+                  ? _pageSettings.listTileMinPadding
+                  : _pageSettings.listTileMaxPadding),
+          title: Card(
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            shape: RoundedRectangleBorder(
+                borderRadius:
+                    BorderRadius.circular(_pageSettings.listTileCornerRadius)),
+            child: Stack(
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(_pageSettings.messageTextPadding),
+                  color: isUserSender
+                      ? _pageSettings.senderMessageBackgroundColor
+                      : _pageSettings.receiverMessageBackgroundColor,
+                  child: Column(
+                    children: <Widget>[
+                      Align(
+                        alignment: isUserSender
+                            ? Alignment.topRight
+                            : Alignment.topLeft,
+                        child: message.messageType == MessageType.image
+                            ? MessagePhoto(
+                                photo: message.messageBody,
+                                placeholderImagePath:
+                                    _pageSettings.messagePhotoPlaceholderPath,
+                              )
+                            : Text(
+                                message.messageBody,
+                                style: TextStyle(
+                                    fontSize:
+                                        _pageSettings.messageBodyTextSize),
+                              ),
+                      ),
+                      SizedBox(height: 4.0),
+                      _buildDateRow(context),
+                    ],
                   ),
-                  if (message.status == Message.STATUS_ERROR)
-                    IconButton(
-                        icon: Icon(Icons.refresh),
-                        onPressed: () {
-                          viewModel.retryToSendMessage(index, message);
-                        }),
-                ],
-              ),
+                ),
+                if (message.sendStatus == MessageSendStatus.error)
+                  IconButton(
+                    icon: Icon(Icons.refresh),
+                    onPressed: () {
+                      viewModel.retryToSendMessage(index, message);
+                    },
+                  ),
+              ],
             ),
-            //onLongPress: () => _onListTileLongPressed(context, index),
-          )
-        : Container();
+          ),
+          //onLongPress: () => _onListTileLongPressed(context, index),
+        );
+      },
+    );
   }
 
-  _buildDateRow(BuildContext context, int index) {
-    MessagesViewModel viewModel =
-        Provider.of<MessagesViewModel>(context, listen: false);
+  _buildDateRow(BuildContext context) {
     Color iconColor = Colors.black45;
-    Message? message = viewModel.getMessageWithIndex(index);
-    return message != null
-        ? Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              Text(
-                viewModel.getMessageDateText(context, index),
-                style: TextStyle(
-                    color: Colors.black45,
-                    fontSize: _pageSettings.messageDateTextSize),
-              ),
-              if (viewModel.isUserSender(index))
-                Container(
-                  margin: EdgeInsets.only(left: 2.0),
-                  child: message.status == Message.STATUS_WAITING
-                      ? SizedBox(
-                          width: _pageSettings.messageStatusIconsSize,
-                          height: _pageSettings.messageStatusIconsSize,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.0,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(iconColor),
-                          ),
+    MessagesViewModel viewModel = Provider.of<MessagesViewModel>(
+      context,
+      listen: false,
+    );
+    return Consumer<Message>(
+      builder: (context, message, child) => Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Text(
+            Converter.messageDateToText(context, message.dateOfCreated),
+            style: TextStyle(
+                color: Colors.black45,
+                fontSize: _pageSettings.messageDateTextSize),
+          ),
+          if (message.senderId == viewModel.currentDatabaseUserId)
+            Container(
+              margin: EdgeInsets.only(left: 2.0),
+              child: message.sendStatus == MessageSendStatus.waiting
+                  ? SizedBox(
+                      width: _pageSettings.messageStatusIconsSize,
+                      height: _pageSettings.messageStatusIconsSize,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+                      ),
+                    )
+                  : message.sendStatus == MessageSendStatus.sent
+                      ? Icon(
+                          Icons.check,
+                          size: _pageSettings.messageStatusIconsSize,
+                          color: iconColor,
                         )
-                      : message.status == Message.STATUS_SENT
+                      : message.sendStatus == MessageSendStatus.error
                           ? Icon(
-                              Icons.check,
+                              Icons.clear,
+                              size: _pageSettings.messageStatusIconsSize,
+                              color: Colors.red,
+                            )
+                          : Icon(
+                              Icons.access_time,
                               size: _pageSettings.messageStatusIconsSize,
                               color: iconColor,
-                            )
-                          : message.status == Message.STATUS_ERROR
-                              ? Icon(
-                                  Icons.clear,
-                                  size: _pageSettings.messageStatusIconsSize,
-                                  color: Colors.red,
-                                )
-                              : Icon(
-                                  Icons.access_time,
-                                  size: _pageSettings.messageStatusIconsSize,
-                                  color: iconColor,
-                                ),
-                ),
-            ],
-          )
-        : Container();
+                            ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTextFieldRow() {
@@ -307,8 +316,8 @@ class MessagesPage extends StatelessWidget {
                       controller: _messageTextFieldController,
                       maxLines: null,
                       enabled: viewModel.state !=
-                              MessagesViewState.LoadingFirstQuery &&
-                          viewModel.state != MessagesViewState.Error,
+                              MessagesViewState.loadingFirstQuery &&
+                          viewModel.state != MessagesViewState.error,
                       decoration: InputDecoration(
                         hintText: viewModel.languageSettings.typeMessage,
                         border: InputBorder.none,
@@ -358,8 +367,10 @@ class MessagesPage extends StatelessWidget {
           color: Colors.white,
         ),
         onPressed: () {
-          MessagesViewModel viewModel =
-              Provider.of<MessagesViewModel>(context, listen: false);
+          MessagesViewModel viewModel = Provider.of<MessagesViewModel>(
+            context,
+            listen: false,
+          );
           String messageBody = _messageTextFieldController.text;
           _messageTextFieldController.clear();
           viewModel.sendMessage(messageBody);
@@ -377,22 +388,6 @@ class MessagesPage extends StatelessWidget {
         newLastMessage.messageUid != currentMessage.messageUid) {
       _contactsViewModel.updateLastMessageCallback(newLastMessage);
     }*/
-  }
-
-  _addScrollListener(BuildContext context) {
-    _controller.addListener(() {
-      _scrollListener(context);
-    });
-  }
-
-  _scrollListener(BuildContext context) {
-    if (_controller.offset >= _controller.position.maxScrollExtent &&
-        !_controller.position.outOfRange) {
-      //if (mounted) {
-      Provider.of<MessagesViewModel>(context, listen: false)
-          .getMessagesWithPagination();
-      //}
-    }
   }
 
 /*

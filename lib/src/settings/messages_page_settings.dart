@@ -1,3 +1,4 @@
+import 'package:c_messaging/src/tools/assets.dart';
 import 'package:flutter/material.dart';
 
 class MessagesPageSettings {
@@ -32,9 +33,8 @@ class MessagesPageSettings {
     this.backIconColor,
     this.titleTextColor,
     this.backgroundImageAssetPath,
-    this.messagePhotoPlaceholderPath =
-        'assets/images/cmessaging/message_photo_placeholder.png',
-    this.profilePhotoPlaceholderPath = 'assets/images/cmessaging/nomessage.png',
+    this.messagePhotoPlaceholderPath = Assets.messagePhotoPlaceholder,
+    this.profilePhotoPlaceholderPath = Assets.noMessage,
     this.listTileMinPadding = 4.0,
     this.listTileMaxPadding = 32.0,
     this.listTileCornerRadius = 4.0,

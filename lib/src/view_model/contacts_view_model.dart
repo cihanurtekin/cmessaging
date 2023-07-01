@@ -5,7 +5,6 @@ import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
-import 'package:c_messaging/src/repository/user_database_repository.dart';
 import 'package:c_messaging/src/repository/message_database_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
@@ -13,20 +12,26 @@ import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:c_messaging/src/view/messages_page.dart';
 import 'package:c_messaging/src/view_model/messages_view_model.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:collection/collection.dart';
 
 enum ContactsViewState {
-  Idle,
-  LoadingFirstQuery,
-  LoadingOtherQueries,
-  Deleting,
-  Error
+  idle,
+  loadingFirstQuery,
+  loadingOtherQueries,
+  deleting,
+  error
 }
 
 class ContactsViewModel with ChangeNotifier {
-  ContactsViewState _state = ContactsViewState.LoadingFirstQuery;
+  MessageDatabaseRepository _messagesDatabaseRepository =
+      locator<MessageDatabaseRepository>();
+
+  final ScrollController _scrollController = ScrollController();
+
+  ScrollController get scrollController => _scrollController;
+
+  ContactsViewState _state = ContactsViewState.loadingFirstQuery;
 
   ContactsViewState get state => _state;
 
@@ -35,41 +40,83 @@ class ContactsViewModel with ChangeNotifier {
     notifyListeners();
   }
 
-  StreamSubscription? _contactUpdateSubscription;
-  bool _isFirstQuery = true;
-
   List<Message> _messages = [];
 
   List<Message> get messages => _messages;
 
-  dynamic _lastMessageToStartAfter;
+  dynamic _lastItemToStartAfter;
 
-  String? _currentDatabaseUserId;
+  StreamSubscription? _contactUpdateSubscription;
+
+  final String _currentDatabaseUserId;
 
   final MessagesPageSettings messagesPageSettings;
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
 
-  MessageDatabaseRepository _messagesDatabaseRepository =
-      locator<MessageDatabaseRepository>();
-  UserDatabaseRepository _userDatabaseRepository =
-      locator<UserDatabaseRepository>();
-
-  final int paginationLimitForFirstQuery;
-  final int paginationLimitForOtherQueries;
+  final int _paginationLimitForFirstQuery;
+  final int _paginationLimitForOtherQueries;
 
   ContactsViewModel({
     required String userId,
-    required this.paginationLimitForFirstQuery,
-    required this.paginationLimitForOtherQueries,
+    required int paginationLimitForFirstQuery,
+    required int paginationLimitForOtherQueries,
     required this.messagesPageSettings,
     required this.firebaseSettings,
     required this.languageSettings,
-  }) {
-    _currentDatabaseUserId = userId;
-    _getMessagesWithPagination(paginationLimitForFirstQuery).then((_) {
-      _addListener();
+  })  : _currentDatabaseUserId = userId,
+        _paginationLimitForFirstQuery = paginationLimitForFirstQuery,
+        _paginationLimitForOtherQueries = paginationLimitForOtherQueries {
+    _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _clearContacts();
+      _getMessages(_paginationLimitForFirstQuery);
     });
+  }
+
+  void _scrollListener() {
+    if (_scrollController.offset >=
+            _scrollController.position.maxScrollExtent &&
+        !_scrollController.position.outOfRange) {
+      if (_state == ContactsViewState.idle) {
+        _state = ContactsViewState.loadingOtherQueries;
+        _getMessages(_paginationLimitForOtherQueries);
+      }
+    }
+  }
+
+  void _clearContacts() {
+    _messages = [];
+    _lastItemToStartAfter = null;
+  }
+
+  void refreshContacts() {
+    state = ContactsViewState.loadingFirstQuery;
+    _clearContacts();
+    _getMessages(_paginationLimitForFirstQuery);
+  }
+
+  void _getMessages(int paginationLimit) async {
+    try {
+      List messageList = await _messagesDatabaseRepository.getMessages(
+        _currentDatabaseUserId,
+        '',
+        ListType.contacts,
+        _lastItemToStartAfter,
+        paginationLimit,
+      );
+      _messages.addAll(
+        List.from(messageList[0]),
+      );
+      _lastItemToStartAfter = messageList[1];
+      if (_contactUpdateSubscription == null) {
+        _addListener();
+      }
+      state = ContactsViewState.idle;
+    } catch (e) {
+      debugPrint('ContactsViewModel / _getMessages: ${e.toString()}');
+      state = ContactsViewState.error;
+    }
   }
 
   @override
@@ -78,64 +125,8 @@ class ContactsViewModel with ChangeNotifier {
     super.dispose();
   }
 
-  void refreshContacts() {
-    state = ContactsViewState.LoadingFirstQuery;
-    _messages = [];
-    _lastMessageToStartAfter = null;
-    _getMessagesWithPagination(paginationLimitForFirstQuery);
-  }
-
-  Future<void> getMessagesWithPagination() async {
-    await _getMessagesWithPagination(paginationLimitForOtherQueries);
-  }
-
-  Future<void> _getMessagesWithPagination(int paginationLimit) async {
-    List messageListAndLastMessage;
-
-    if (_currentDatabaseUserId != null) {
-      if (hasMessage()) {
-        state = ContactsViewState.LoadingFirstQuery;
-      } else {
-        state = ContactsViewState.LoadingOtherQueries;
-      }
-      try {
-        messageListAndLastMessage = await _messagesDatabaseRepository
-            .getMessagesAndLastMessageWithPagination(
-          _currentDatabaseUserId!,
-          '',
-          ListType.Contacts,
-          _lastMessageToStartAfter,
-          paginationLimit,
-        );
-
-        for (Message m in messageListAndLastMessage[0]) {
-          User? user = await _userDatabaseRepository.getUser(
-            m.contactId,
-          );
-          m.contactUser = user;
-        }
-
-        messages.addAll(messageListAndLastMessage[0]);
-        _lastMessageToStartAfter = messageListAndLastMessage[1];
-        state = ContactsViewState.Idle;
-      } catch (e) {
-        print(
-            "ContactsViewModel / getMessagesWithPagination : ${e.toString()}");
-        state = ContactsViewState.Error;
-      }
-    }
-  }
-
-  bool hasMessage() {
-    return messages.length > 0;
-  }
-
   bool isUserSender(Message message) {
-    bool result = true;
-    if (_currentDatabaseUserId != null) {
-      result = message.senderId == _currentDatabaseUserId;
-    }
-    return result;
+    return message.senderId == _currentDatabaseUserId;
   }
 
   Future<MessageDatabaseResult> deleteMessage(
@@ -144,80 +135,59 @@ class ContactsViewModel with ChangeNotifier {
     bool isLastMessage,
     Message newLastMessage,
   ) {
-    // TODO: implement deleteMessage
     return Future.value(MessageDatabaseResult.Error);
   }
 
-  Message? getMessageWithIndex(int index) {
-    if (hasMessage()) {
-      return messages[index];
-    } else {
-      return null;
-    }
-  }
-
-  String getMessageDateText(BuildContext context, int index) {
-    return DateFormat.yMMMd(Localizations.localeOf(context).languageCode)
-        .format(
-      getMessageWithIndex(index)?.dateOfCreated ?? DateTime(2000),
-    );
-  }
-
-  Future<MessageDatabaseResult> deleteAllMessagesOfContactWithIndex(
-    int index,
+  Future<MessageDatabaseResult> deleteAllMessagesOfContact(
+    Message message,
   ) async {
     MessageDatabaseResult result = MessageDatabaseResult.Error;
-    Message? messageToDelete = getMessageWithIndex(index);
-    if (_currentDatabaseUserId != null && messageToDelete != null) {
-      state = ContactsViewState.Deleting;
-      try {
-        result = await _messagesDatabaseRepository.deleteAllMessagesOfContact(
-            _currentDatabaseUserId!, messageToDelete.contactId);
-      } catch (e) {
-        print(
-            "ContactsViewState / deleteAllMessagesOfContact : ${e.toString()}");
-      }
-      state = ContactsViewState.Idle;
+    state = ContactsViewState.deleting;
+    try {
+      result = await _messagesDatabaseRepository.deleteAllMessagesOfContact(
+        _currentDatabaseUserId,
+        message.contactId,
+      );
+    } catch (e) {
+      debugPrint(
+        "ContactsViewState / deleteAllMessagesOfContact : ${e.toString()}",
+      );
     }
+    state = ContactsViewState.idle;
+
     return result;
   }
 
   void _addListener() async {
-    if (_currentDatabaseUserId != null) {
-      _contactUpdateSubscription = _messagesDatabaseRepository
-          .addListenerToContacts(_currentDatabaseUserId!, "")
-          .listen((messageList) {
-        if (messageList.isNotEmpty) {
-          Message? newMessage = messageList[0];
+    _contactUpdateSubscription = _messagesDatabaseRepository
+        .addListenerToContacts(_currentDatabaseUserId, "")
+        .listen((messageList) {
+      if (messageList.isNotEmpty) {
+        Message? newMessage = messageList[0];
 
-          if (newMessage != null) {
-            newMessageHandler(newMessage);
-          }
+        if (newMessage != null) {
+          newMessageHandler(newMessage);
         }
-      });
-    }
+      }
+    });
   }
 
   void newMessageHandler(Message newMessage) {
-    if (_isFirstQuery) {
-      _isFirstQuery = false;
-    } else {
-      String contactIdToRemove = "";
-      Message messageToAdd = newMessage;
-      for (Message m in _messages) {
-        if (m.contactId == messageToAdd.contactId) {
-          User? contactUser = m.contactUser;
-          messageToAdd.contactUser = contactUser;
-          contactIdToRemove = m.contactId;
-          break;
-        }
+    String contactIdToRemove = "";
+    Message messageToAdd = newMessage;
+    for (Message m in _messages) {
+      if (m.contactId == messageToAdd.contactId) {
+        User? contactUser = m.contactUser;
+        messageToAdd.contactUser = contactUser;
+        contactIdToRemove = m.contactId;
+        break;
       }
-      if (contactIdToRemove.trim().isNotEmpty) {
-        _messages.removeWhere((mess) => mess.contactId == contactIdToRemove);
-      }
-      _messages.insert(0, messageToAdd);
-      notifyListeners();
     }
+    if (contactIdToRemove.trim().isNotEmpty) {
+      _messages.removeWhere((mess) => mess.contactId == contactIdToRemove);
+    }
+    _messages.insert(0, messageToAdd);
+    notifyListeners();
   }
 
   void updateLastMessageCallback(Message message) {
@@ -236,35 +206,31 @@ class ContactsViewModel with ChangeNotifier {
       (m) => m.contactId == mess.contactId,
     );
     if (message != null) {
-      message.status = mess.status;
-      notifyListeners();
+      message.updateSendStatus(mess.sendStatus);
     }
   }
 
-  void openMessagesPage(BuildContext context, int index) {
-    Message? message = getMessageWithIndex(index);
-    if (_currentDatabaseUserId != null && message != null) {
-      User? contactUser = message.contactUser;
-      if (contactUser != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (BuildContext context) => ChangeNotifierProvider(
-              create: (context) => MessagesViewModel(
-                userId: _currentDatabaseUserId!,
-                contactUser: contactUser,
-                paginationLimitForFirstQuery:
-                    messagesPageSettings.paginationLimitForFirstQuery,
-                paginationLimitForOtherQueries:
-                    messagesPageSettings.paginationLimitForOtherQueries,
-                firebaseSettings: firebaseSettings,
-                languageSettings: languageSettings,
-              ),
-              child: MessagesPage(messagesPageSettings, languageSettings),
+  void openMessagesPage(BuildContext context, Message message) {
+    User? contactUser = message.contactUser;
+    if (contactUser != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => ChangeNotifierProvider(
+            create: (context) => MessagesViewModel(
+              userId: _currentDatabaseUserId,
+              contactUser: contactUser,
+              paginationLimitForFirstQuery:
+                  messagesPageSettings.paginationLimitForFirstQuery,
+              paginationLimitForOtherQueries:
+                  messagesPageSettings.paginationLimitForOtherQueries,
+              firebaseSettings: firebaseSettings,
+              languageSettings: languageSettings,
             ),
+            child: MessagesPage(messagesPageSettings, languageSettings),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
