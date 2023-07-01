@@ -43,6 +43,17 @@ class MessagesPage extends StatelessWidget {
     );
     User contactUser = viewModel.contactUser;
     return AppBar(
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: _pageSettings.backIconColor,
+        ),
+        onPressed: () {
+          MessagesViewModel viewModel =
+              Provider.of<MessagesViewModel>(context, listen: false);
+          viewModel.onBackButtonPressed(context);
+        },
+      ),
       title: Row(
         children: <Widget>[
           ProfilePhoto(
@@ -58,13 +69,18 @@ class MessagesPage extends StatelessWidget {
             child: Text(
               contactUser.username.isNotEmpty
                   ? contactUser.username
-                  : _languageSettings.messagesPageDefaultUsernameForContactTitle,
+                  : _languageSettings
+                      .messagesPageDefaultUsernameForContactTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: _pageSettings.titleTextColor,
+              ),
             ),
           ),
         ],
       ),
+      backgroundColor: _pageSettings.toolbarColor,
     );
   }
 

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 class MessagesPageSettings {
   final int paginationLimitForFirstQuery;
   final int paginationLimitForOtherQueries;
+  final Color? toolbarColor;
+  final Color? backIconColor;
+  final Color? titleTextColor;
   final String? backgroundImageAssetPath;
   final String messagePhotoPlaceholderPath;
   final String profilePhotoPlaceholderPath;
@@ -25,6 +28,9 @@ class MessagesPageSettings {
   MessagesPageSettings({
     this.paginationLimitForFirstQuery = 10,
     this.paginationLimitForOtherQueries = 10,
+    this.toolbarColor,
+    this.backIconColor,
+    this.titleTextColor,
     this.backgroundImageAssetPath,
     this.messagePhotoPlaceholderPath =
         'assets/images/cmessaging/message_photo_placeholder.png',

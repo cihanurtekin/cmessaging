@@ -380,4 +380,8 @@ class MessagesViewModel with ChangeNotifier {
     }
     return false;
   }
+
+  void onBackButtonPressed(BuildContext context) {
+    Navigator.pop(context);
+  }
 }
