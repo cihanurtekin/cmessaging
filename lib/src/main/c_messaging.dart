@@ -95,13 +95,13 @@ class CMessaging {
     }
   }
 
-  pushContactsPage(BuildContext context) {
+  Future<T?> pushContactsPage<T extends Object?>(BuildContext context) {
     if (isInitialized &&
         _contactsPageSettings != null &&
         _messagesPageSettings != null &&
         _firebaseSettings != null &&
         _languageSettings != null) {
-      Navigator.push(
+      return Navigator.push<T>(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ChangeNotifierProvider(
@@ -123,9 +123,10 @@ class CMessaging {
         ),
       );
     }
+    return Future.value(null);
   }
 
-  pushMessagesPage(
+  Future<T?> pushMessagesPage<T extends Object?>(
     BuildContext context,
     String contactUserId,
     String contactUsername,
@@ -142,7 +143,7 @@ class CMessaging {
         _messagesPageSettings != null &&
         _firebaseSettings != null &&
         _languageSettings != null) {
-      Navigator.push(
+      return Navigator.push<T>(
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ChangeNotifierProvider(
@@ -161,5 +162,6 @@ class CMessaging {
         ),
       );
     }
+    return Future.value(null);
   }
 }
