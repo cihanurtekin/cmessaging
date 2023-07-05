@@ -113,8 +113,8 @@ class MessagesViewModel with ChangeNotifier {
     try {
       List messageList = await _messagesDatabaseRepository.getMessages(
         _currentDatabaseUserId,
-        '',
-        ListType.contacts,
+        _contactUser.userId,
+        ListType.messages,
         _lastItemToStartAfter,
         paginationLimit,
       );
