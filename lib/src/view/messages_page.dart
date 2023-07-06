@@ -25,10 +25,12 @@ class MessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: onPop,
-      child: Scaffold(
-        appBar: _buildAppBar(context),
-        body: _buildBody(context),
-      ),
+      child: _pageSettings.buildScaffold
+          ? Scaffold(
+              appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
+              body: _buildBody(context),
+            )
+          : _buildBody(context),
     );
   }
 
@@ -78,7 +80,7 @@ class MessagesPage extends StatelessWidget {
           ),
         ],
       ),
-      backgroundColor: _pageSettings.toolbarColor,
+      backgroundColor: _pageSettings.appBarColor,
     );
   }
 

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 class MessagesPageSettings {
   final int paginationLimitForFirstQuery;
   final int paginationLimitForOtherQueries;
-  final Color? toolbarColor;
+  final Color? appBarColor;
   final Color? backIconColor;
   final Color? titleTextColor;
+  final bool buildScaffold;
+  final bool showAppBar;
   final String? backgroundImageAssetPath;
   final String messagePhotoPlaceholderPath;
   final String profilePhotoPlaceholderPath;
@@ -29,12 +31,14 @@ class MessagesPageSettings {
   MessagesPageSettings({
     this.paginationLimitForFirstQuery = 10,
     this.paginationLimitForOtherQueries = 10,
-    this.toolbarColor,
+    this.appBarColor,
     this.backIconColor,
     this.titleTextColor,
+    this.buildScaffold = true,
+    this.showAppBar = true,
     this.backgroundImageAssetPath,
     this.messagePhotoPlaceholderPath = Assets.messagePhotoPlaceholder,
-    this.profilePhotoPlaceholderPath = Assets.noMessage,
+    this.profilePhotoPlaceholderPath = Assets.noPp,
     this.listTileMinPadding = 4.0,
     this.listTileMaxPadding = 32.0,
     this.listTileCornerRadius = 4.0,

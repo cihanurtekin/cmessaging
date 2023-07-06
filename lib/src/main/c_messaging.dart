@@ -79,14 +79,39 @@ class CMessaging {
   }
 
   _initRepositories(BuildContext context) {
-    if (_firebaseSettings != null &&
-        _serviceSettings != null) {
+    if (_firebaseSettings != null && _serviceSettings != null) {
       _repositories = Repositories(
         firebaseSettings: _firebaseSettings!,
         serviceSettings: _serviceSettings!,
       );
       _repositories?.createAll(context);
     }
+  }
+
+  Widget? ContactsPage() {
+    if (isInitialized &&
+        _contactsPageSettings != null &&
+        _messagesPageSettings != null &&
+        _firebaseSettings != null &&
+        _languageSettings != null) {
+      return ChangeNotifierProvider(
+        create: (context) => ContactsViewModel(
+          userId: _userId!,
+          paginationLimitForFirstQuery:
+              _contactsPageSettings!.paginationLimitForFirstQuery,
+          paginationLimitForOtherQueries:
+              _contactsPageSettings!.paginationLimitForOtherQueries,
+          messagesPageSettings: _messagesPageSettings!,
+          firebaseSettings: _firebaseSettings!,
+          languageSettings: _languageSettings!,
+        ),
+        child: MessageContactsPage(
+          _contactsPageSettings!,
+          _languageSettings!,
+        ),
+      );
+    }
+    return null;
   }
 
   Future<T?> pushContactsPage<T extends Object?>(BuildContext context) {

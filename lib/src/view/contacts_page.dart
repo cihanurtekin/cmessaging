@@ -24,10 +24,12 @@ class MessageContactsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      body: _buildBody(context),
-    );
+    return _pageSettings.buildScaffold
+        ? Scaffold(
+            appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
+            body: _buildBody(context),
+          )
+        : _buildBody(context);
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -51,7 +53,7 @@ class MessageContactsPage extends StatelessWidget {
           color: _pageSettings.titleTextColor,
         ),
       ),
-      backgroundColor: _pageSettings.toolbarColor,
+      backgroundColor: _pageSettings.appBarColor,
     );
   }
 

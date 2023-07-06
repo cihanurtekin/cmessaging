@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 class ContactsPageSettings {
   final int paginationLimitForFirstQuery;
   final int paginationLimitForOtherQueries;
-  final Color? toolbarColor;
+  final Color? appBarColor;
   final Color? backIconColor;
   final Color? titleTextColor;
+  final bool buildScaffold;
+  final bool showAppBar;
   final bool showContactProfilePhoto;
   final bool showDivider;
   final double paddingTop;
@@ -32,9 +34,11 @@ class ContactsPageSettings {
   ContactsPageSettings({
     this.paginationLimitForFirstQuery = 10,
     this.paginationLimitForOtherQueries = 10,
-    this.toolbarColor,
+    this.appBarColor,
     this.backIconColor,
     this.titleTextColor,
+    this.buildScaffold = true,
+    this.showAppBar = true,
     this.showContactProfilePhoto = true,
     this.showDivider = true,
     this.paddingTop = 8.0,
