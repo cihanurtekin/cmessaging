@@ -19,7 +19,6 @@ class FirebaseStorageService implements StorageService {
 
   @override
   Future<String?> uploadFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
@@ -47,13 +46,11 @@ class FirebaseStorageService implements StorageService {
 
   @override
   Future<String?> uploadImageFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
   ) async {
     return await uploadFile(
-      userId,
       fileName,
       folderName,
       file,
@@ -72,7 +69,25 @@ class FirebaseStorageService implements StorageService {
       String finalFolderName = '${_firebaseSettings!.messagesFolderName}'
           '/$senderId/$receiverId';
       return await uploadImageFile(
-        senderId,
+        fileName,
+        finalFolderName,
+        imageFile,
+      );
+    }
+    return null;
+  }
+
+  @override
+  Future<String?> uploadChannelMessageImage(
+    String senderId,
+    String channelId,
+    String fileName,
+    File imageFile,
+  ) async {
+    if (_firebaseSettings != null) {
+      String finalFolderName = '${_firebaseSettings!.channelsFolderName}'
+          '/$channelId/$senderId';
+      return await uploadImageFile(
         fileName,
         finalFolderName,
         imageFile,

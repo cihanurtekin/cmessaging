@@ -2,7 +2,7 @@ import 'package:c_messaging/src/main/public_enums.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/settings_base.dart';
 
-enum ListType { messages, contacts }
+enum ListType { messages, contacts, channelMessages }
 
 abstract class MessageDatabaseBase {
   void initialize(SettingsBase settings);
@@ -44,6 +44,7 @@ abstract class MessageDatabaseBase {
 
   Stream<List<Message?>> addListenerToMessages(
     String currentUserId,
-    contactId,
-  );
+    contactId, {
+    String? channelId,
+  });
 }

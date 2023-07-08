@@ -21,16 +21,16 @@ class _AllUsersPageState extends State<AllUsersPage> {
         child: Scaffold(
           body: Consumer<AllUsersViewModel>(
             builder: (ctx, viewModel, child) =>
-            viewModel.state == AllUsersViewState.Idle
-                ? ListView.builder(
-              itemCount: viewModel.users.length,
-              itemBuilder: (context, index) {
-                User user = viewModel.users[index];
-                return ListTile(
-                  title: Text(user.username),
-                  subtitle: Text(user.userId),
-                  onTap: () async {
-                    /*await getCurrentDatabaseUser();
+                viewModel.state == AllUsersViewState.Idle
+                    ? ListView.builder(
+                        itemCount: viewModel.users.length,
+                        itemBuilder: (context, index) {
+                          User user = viewModel.users[index];
+                          return ListTile(
+                            title: Text(user.username),
+                            subtitle: Text(user.userId),
+                            onTap: () async {
+                              /*await getCurrentDatabaseUser();
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -41,11 +41,11 @@ class _AllUsersPageState extends State<AllUsersPage> {
                                 child: MessagesPage()),
                       ),
                     );*/
-                  },
-                );
-              },
-            )
-                : Center(child: CircularProgressIndicator()),
+                            },
+                          );
+                        },
+                      )
+                    : Center(child: CircularProgressIndicator()),
           ),
         ),
       ),
@@ -59,7 +59,9 @@ class _AllUsersPageState extends State<AllUsersPage> {
     try {
       //_currentDatabaseUser = await _userDatabaseRepository.getCurrentDatabaseUser();
     } catch (e) {
-      print("MessagesViewModel / getCurrentDatabaseUser : ${e.toString()}");
+      debugPrint(
+        "MessagesViewModel / getCurrentDatabaseUser : ${e.toString()}",
+      );
     }
     return _currentDatabaseUser;
   }

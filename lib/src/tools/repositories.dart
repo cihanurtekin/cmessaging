@@ -1,5 +1,7 @@
+import 'package:c_messaging/src/repository/channel_database_repository.dart';
 import 'package:c_messaging/src/repository/storage_repository.dart';
 import 'package:c_messaging/src/service/firebase/firebase_storage_service.dart';
+import 'package:c_messaging/src/service/firebase/firestore_channel_database_service.dart';
 import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/repository/message_database_repository.dart';
 import 'package:c_messaging/src/repository/notification_repository.dart';
@@ -23,6 +25,12 @@ class Repositories {
 
   UserDatabaseRepository? get userDatabaseRepository => _userDatabaseRepository;
 
+  ChannelDatabaseRepository? _channelDatabaseRepository =
+      locator<ChannelDatabaseRepository>();
+
+  ChannelDatabaseRepository? get channelDatabaseRepository =>
+      _channelDatabaseRepository;
+
   NotificationRepository? _notificationRepository =
       locator<NotificationRepository>();
 
@@ -32,8 +40,8 @@ class Repositories {
 
   StorageRepository? get storageRepository => _storageRepository;
 
-  FirebaseSettings _firebaseSettings;
-  ServiceSettings _serviceSettings;
+  final FirebaseSettings _firebaseSettings;
+  final ServiceSettings _serviceSettings;
 
   Repositories({
     required FirebaseSettings firebaseSettings,
@@ -41,14 +49,15 @@ class Repositories {
   })  : _firebaseSettings = firebaseSettings,
         _serviceSettings = serviceSettings;
 
-  createAll(BuildContext context) {
+  void createAll(BuildContext context) {
     _createMessageDatabaseRepository();
     _createCustomUserDatabaseRepository();
+    _createChannelDatabaseRepository();
     _createNotificationRepository(context);
     _createStorageRepository(context);
   }
 
-  _createMessageDatabaseRepository() {
+  void _createMessageDatabaseRepository() {
     FirestoreMessageDatabaseService firestoreMessagesDatabaseService =
         locator<FirestoreMessageDatabaseService>();
 
@@ -58,7 +67,7 @@ class Repositories {
     _messageDatabaseRepository?.initialize(_serviceSettings);
   }
 
-  _createCustomUserDatabaseRepository() {
+  void _createCustomUserDatabaseRepository() {
     FirestoreUserDatabaseService firestoreCustomUserDatabaseService =
         locator<FirestoreUserDatabaseService>();
 
@@ -68,7 +77,16 @@ class Repositories {
     _userDatabaseRepository?.initialize(_serviceSettings);
   }
 
-  _createNotificationRepository(BuildContext context) async {
+  void _createChannelDatabaseRepository() {
+    FirestoreChannelDatabaseService firestoreChannelDatabaseService =
+        locator<FirestoreChannelDatabaseService>();
+
+    firestoreChannelDatabaseService.initialize(_firebaseSettings);
+
+    _channelDatabaseRepository?.initialize(_serviceSettings);
+  }
+
+  void _createNotificationRepository(BuildContext context) async {
     FcmNotificationService fcmNotificationService =
         locator<FcmNotificationService>();
 
@@ -78,7 +96,7 @@ class Repositories {
     _notificationRepository?.initialize(context, _serviceSettings);
   }
 
-  _createStorageRepository(BuildContext context) async {
+  void _createStorageRepository(BuildContext context) async {
     FirebaseStorageService firebaseStorageService =
         locator<FirebaseStorageService>();
 

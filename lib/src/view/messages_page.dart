@@ -1,5 +1,6 @@
 import 'package:c_messaging/src/custom_widgets/message_photo.dart';
 import 'package:c_messaging/src/custom_widgets/profile_photo.dart';
+import 'package:c_messaging/src/model/channel.dart';
 import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/messages_page_settings.dart';
@@ -43,7 +44,8 @@ class MessagesPage extends StatelessWidget {
       context,
       listen: false,
     );
-    User contactUser = viewModel.contactUser;
+    User? contactUser = viewModel.contactUser;
+    Channel? channel = viewModel.channel;
     return AppBar(
       leading: IconButton(
         icon: Icon(
@@ -57,7 +59,7 @@ class MessagesPage extends StatelessWidget {
       title: Row(
         children: <Widget>[
           ProfilePhoto(
-            photo: contactUser.profilePhotoUrl,
+            photo: contactUser?.profilePhotoUrl ?? channel?.imageUrl ?? '',
             placeholderImagePath: _pageSettings.profilePhotoPlaceholderPath,
             radius: _pageSettings.profilePhotoRadius,
             backgroundColor: _pageSettings.profilePhotoBackgroundColor,
@@ -67,10 +69,12 @@ class MessagesPage extends StatelessWidget {
           ),
           Flexible(
             child: Text(
-              contactUser.username.isNotEmpty
-                  ? contactUser.username
-                  : _languageSettings
-                      .messagesPageDefaultUsernameForContactTitle,
+              contactUser != null
+                  ? contactUser.username.isNotEmpty
+                      ? contactUser.username
+                      : _languageSettings
+                          .messagesPageDefaultUsernameForContactTitle
+                  : channel?.title ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

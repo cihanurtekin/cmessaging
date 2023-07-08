@@ -14,8 +14,7 @@ class StorageRepository implements StorageBase {
   @override
   void initialize(SettingsBase settings) {
     if (settings is ServiceSettings) {
-      if (settings.userDatabaseServiceMode ==
-          StorageServiceMode.FirebaseStorage) {
+      if (settings.storageServiceMode == StorageServiceMode.FirebaseStorage) {
         _service = locator<FirebaseStorageService>();
       } else {
         //_service = locator<DebugStorageService>();
@@ -25,14 +24,12 @@ class StorageRepository implements StorageBase {
 
   @override
   Future<String?> uploadFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
     String extension,
   ) async {
     return await _service.uploadFile(
-      userId,
       fileName,
       folderName,
       file,
@@ -42,12 +39,11 @@ class StorageRepository implements StorageBase {
 
   @override
   Future<String?> uploadImageFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
   ) async {
-    return await _service.uploadImageFile(userId, fileName, folderName, file);
+    return await _service.uploadImageFile(fileName, folderName, file);
   }
 
   @override
@@ -60,6 +56,21 @@ class StorageRepository implements StorageBase {
     return await _service.uploadMessageImage(
       senderId,
       receiverId,
+      fileName,
+      imageFile,
+    );
+  }
+
+  @override
+  Future<String?> uploadChannelMessageImage(
+    String senderId,
+    String channelId,
+    String fileName,
+    File imageFile,
+  ) async {
+    return await _service.uploadChannelMessageImage(
+      senderId,
+      channelId,
       fileName,
       imageFile,
     );

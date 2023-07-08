@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:example/main/custom_firebase_settings.dart';
 import 'package:example/model/user.dart';
+import 'package:flutter/material.dart';
 
 enum UserBaseResult { Success, Error }
 
@@ -73,8 +74,9 @@ class FirestoreUserDatabaseService {
         result = UserBaseResult.Success;
       }).catchError((e) {
         result = UserBaseResult.Error;
-        print(
-            "FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}");
+        debugPrint(
+          "FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}",
+        );
       });
 
       return result;

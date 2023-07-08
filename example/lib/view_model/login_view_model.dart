@@ -7,6 +7,7 @@ import 'package:example/service/user_database_service_firestore.dart';
 import 'package:flutter/material.dart';
 
 enum LoginViewState { Idle, Loading, LoggedIn, Error }
+
 enum PasswordResetState { SendingEmail, Success, Error }
 
 class LoginViewModel with ChangeNotifier {
@@ -66,7 +67,9 @@ class LoginViewModel with ChangeNotifier {
         _navigateToAllUsersPage(context, currentUserId);
       }
     } catch (e) {
-      print("LoginViewModel / signInWithEmailAndPassword : ${e.toString()}");
+      debugPrint(
+        "LoginViewModel / signInWithEmailAndPassword : ${e.toString()}",
+      );
       //dialog.cancel(context);
       //DialogHelper.showErrorDialog(context, e);
     }
@@ -83,7 +86,7 @@ class LoginViewModel with ChangeNotifier {
       //dialog.cancel(context);
       //DialogHelper.showSuccessDialog(context, Sentences.passwordResetEmailSentSuccessfully());
     } catch (e) {
-      print("LoginViewModel / sendPasswordResetEmail : ${e.toString()}");
+      debugPrint("LoginViewModel / sendPasswordResetEmail : ${e.toString()}");
       //dialog.cancel(context);
       //DialogHelper.showErrorDialog(context, e);
     }

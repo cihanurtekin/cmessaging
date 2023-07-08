@@ -1,4 +1,5 @@
 import 'package:c_messaging/src/model/user.dart';
+import 'package:c_messaging/src/settings/channels_page_settings.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
@@ -6,8 +7,10 @@ import 'package:c_messaging/src/settings/messages_page_settings.dart';
 import 'package:c_messaging/src/settings/service_settings.dart';
 import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/tools/repositories.dart';
+import 'package:c_messaging/src/view/channels_page.dart';
 import 'package:c_messaging/src/view/contacts_page.dart';
 import 'package:c_messaging/src/view/messages_page.dart';
+import 'package:c_messaging/src/view_model/channels_view_model.dart';
 import 'package:c_messaging/src/view_model/contacts_view_model.dart';
 import 'package:c_messaging/src/view_model/messages_view_model.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +37,7 @@ class CMessaging {
   FirebaseSettings? _firebaseSettings;
   ContactsPageSettings? _contactsPageSettings;
   MessagesPageSettings? _messagesPageSettings;
+  ChannelsPageSettings? _channelsPageSettings;
   LanguageSettings? _languageSettings;
 
   set serviceSettings(ServiceSettings value) {
@@ -52,6 +56,10 @@ class CMessaging {
     _messagesPageSettings = value;
   }
 
+  set channelsPageSettings(ChannelsPageSettings value) {
+    _channelsPageSettings = value;
+  }
+
   set languageSettings(LanguageSettings value) {
     _languageSettings = value;
   }
@@ -63,6 +71,7 @@ class CMessaging {
     required FirebaseSettings firebaseSettings,
     ContactsPageSettings? contactsPageSettings,
     MessagesPageSettings? messagesPageSettings,
+    ChannelsPageSettings? channelsPageSettings,
     LanguageSettings? languageSettings,
   }) {
     _userId = userId;
@@ -70,6 +79,7 @@ class CMessaging {
     _firebaseSettings = firebaseSettings;
     _contactsPageSettings = contactsPageSettings ?? ContactsPageSettings();
     _messagesPageSettings = messagesPageSettings ?? MessagesPageSettings();
+    _channelsPageSettings = channelsPageSettings ?? ChannelsPageSettings();
     _languageSettings = languageSettings ?? LanguageSettings();
     _initRepositories(context);
   }
@@ -107,6 +117,32 @@ class CMessaging {
         ),
         child: MessageContactsPage(
           _contactsPageSettings!,
+          _languageSettings!,
+        ),
+      );
+    }
+    return null;
+  }
+
+  Widget? ChannelsPage() {
+    if (isInitialized &&
+        _channelsPageSettings != null &&
+        _messagesPageSettings != null &&
+        _firebaseSettings != null &&
+        _languageSettings != null) {
+      return ChangeNotifierProvider(
+        create: (context) => ChannelsViewModel(
+          userId: _userId!,
+          paginationLimitForFirstQuery:
+              _contactsPageSettings!.paginationLimitForFirstQuery,
+          paginationLimitForOtherQueries:
+              _contactsPageSettings!.paginationLimitForOtherQueries,
+          messagesPageSettings: _messagesPageSettings!,
+          firebaseSettings: _firebaseSettings!,
+          languageSettings: _languageSettings!,
+        ),
+        child: MessageChannelsPage(
+          _channelsPageSettings!,
           _languageSettings!,
         ),
       );
@@ -166,7 +202,7 @@ class CMessaging {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ChangeNotifierProvider(
-            create: (context) => MessagesViewModel(
+            create: (context) => MessagesViewModel.contact(
               userId: _userId!,
               contactUser: contactUser,
               paginationLimitForFirstQuery:

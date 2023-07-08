@@ -5,6 +5,7 @@ class CMessagingSettings {
   static ServiceSettings serviceSettings = ServiceSettings(
     userDatabaseServiceMode: UserDatabaseServiceMode.Firestore,
     messagesDatabaseServiceMode: MessageDatabaseServiceMode.Firestore,
+    channelDatabaseServiceMode: ChannelDatabaseServiceMode.Firestore,
     notificationServiceMode: NotificationServiceMode.FirebaseCloudMessaging,
     storageServiceMode: StorageServiceMode.FirebaseStorage,
   );

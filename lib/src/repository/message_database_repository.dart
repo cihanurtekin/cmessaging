@@ -13,8 +13,8 @@ class MessageDatabaseRepository implements MessageDatabaseBase {
   @override
   void initialize(SettingsBase settings) {
     if (settings is ServiceSettings) {
-      if (settings.userDatabaseServiceMode ==
-          UserDatabaseServiceMode.Firestore) {
+      if (settings.messagesDatabaseServiceMode ==
+          MessageDatabaseServiceMode.Firestore) {
         _service = locator<FirestoreMessageDatabaseService>();
       } else {
         //_service = locator<DebugMessagesDatabaseService>();
@@ -97,11 +97,13 @@ class MessageDatabaseRepository implements MessageDatabaseBase {
   @override
   Stream<List<Message?>> addListenerToMessages(
     String currentUserId,
-    contactId,
-  ) {
+    contactId, {
+    String? channelId,
+  }) {
     return _service.addListenerToMessages(
       currentUserId,
       contactId,
+      channelId: channelId,
     );
   }
 }

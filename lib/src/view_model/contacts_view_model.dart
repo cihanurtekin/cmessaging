@@ -217,7 +217,7 @@ class ContactsViewModel with ChangeNotifier {
         context,
         MaterialPageRoute(
           builder: (BuildContext context) => ChangeNotifierProvider(
-            create: (context) => MessagesViewModel(
+            create: (context) => MessagesViewModel.contact(
               userId: _currentDatabaseUserId,
               contactUser: contactUser,
               paginationLimitForFirstQuery:

@@ -5,6 +5,7 @@ import 'package:c_messaging/src/base/message_database_base.dart';
 import 'package:c_messaging/src/custom_widgets/photo_picker.dart';
 import 'package:c_messaging/src/dialog/dialog_helper.dart';
 import 'package:c_messaging/src/dialog/loading_dialog.dart';
+import 'package:c_messaging/src/model/channel.dart';
 import 'package:c_messaging/src/repository/storage_repository.dart';
 import 'package:c_messaging/src/tools/locator.dart';
 import 'package:c_messaging/src/main/public_enums.dart';
@@ -15,7 +16,6 @@ import 'package:c_messaging/src/repository/notification_repository.dart';
 import 'package:c_messaging/src/settings/firebase_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:collection/collection.dart';
 import 'package:uuid/uuid.dart';
 
 enum MessagesViewState {
@@ -59,9 +59,13 @@ class MessagesViewModel with ChangeNotifier {
 
   String get currentDatabaseUserId => _currentDatabaseUserId;
 
-  final User _contactUser;
+  User? _contactUser;
 
-  User get contactUser => _contactUser;
+  User? get contactUser => _contactUser;
+
+  Channel? _channel;
+
+  Channel? get channel => _channel;
 
   final FirebaseSettings firebaseSettings;
   final LanguageSettings languageSettings;
@@ -69,7 +73,7 @@ class MessagesViewModel with ChangeNotifier {
   final int _paginationLimitForFirstQuery;
   final int _paginationLimitForOtherQueries;
 
-  MessagesViewModel({
+  MessagesViewModel.contact({
     required String userId,
     required User contactUser,
     required int paginationLimitForFirstQuery,
@@ -78,6 +82,24 @@ class MessagesViewModel with ChangeNotifier {
     required this.languageSettings,
   })  : _currentDatabaseUserId = userId,
         _contactUser = contactUser,
+        _paginationLimitForFirstQuery = paginationLimitForFirstQuery,
+        _paginationLimitForOtherQueries = paginationLimitForOtherQueries {
+    _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _clearMessages();
+      _getMessages(_paginationLimitForFirstQuery);
+    });
+  }
+
+  MessagesViewModel.channel({
+    required String userId,
+    required Channel channel,
+    required int paginationLimitForFirstQuery,
+    required int paginationLimitForOtherQueries,
+    required this.firebaseSettings,
+    required this.languageSettings,
+  })  : _currentDatabaseUserId = userId,
+        _channel = channel,
         _paginationLimitForFirstQuery = paginationLimitForFirstQuery,
         _paginationLimitForOtherQueries = paginationLimitForOtherQueries {
     _scrollController.addListener(_scrollListener);
@@ -111,13 +133,24 @@ class MessagesViewModel with ChangeNotifier {
 
   void _getMessages(int paginationLimit) async {
     try {
-      List messageList = await _messagesDatabaseRepository.getMessages(
-        _currentDatabaseUserId,
-        _contactUser.userId,
-        ListType.messages,
-        _lastItemToStartAfter,
-        paginationLimit,
-      );
+      List messageList = [];
+      if (_contactUser != null) {
+        messageList = await _messagesDatabaseRepository.getMessages(
+          _currentDatabaseUserId,
+          _contactUser!.userId,
+          ListType.messages,
+          _lastItemToStartAfter,
+          paginationLimit,
+        );
+      } else if (_channel != null) {
+        messageList = await _messagesDatabaseRepository.getMessages(
+          _currentDatabaseUserId,
+          _channel!.channelId,
+          ListType.channelMessages,
+          _lastItemToStartAfter,
+          paginationLimit,
+        );
+      }
       _messages.addAll(
         List.from(messageList[0]),
       );
@@ -148,18 +181,15 @@ class MessagesViewModel with ChangeNotifier {
     Message newLastMessage = isLastMessage ? _messages[1] : _messages[0];
     try {
       //newLastMessage.contactUser = _contactUser;
-      MessageDatabaseResult result =
-          await _messagesDatabaseRepository.deleteMessage(
-              _currentDatabaseUserId,
-              messageToDelete,
-              isLastMessage,
-              newLastMessage);
+      //MessageDatabaseResult result =
+      await _messagesDatabaseRepository.deleteMessage(_currentDatabaseUserId,
+          messageToDelete, isLastMessage, newLastMessage);
       /*if (result == MessagesBaseResult.Success) {
         messages
             .removeWhere((m) => m.messageUid == messageToDelete.messageUid);
       }*/
     } catch (e) {
-      print("MessagesViewModel / deleteMessage : ${e.toString()}");
+      debugPrint("MessagesViewModel / deleteMessage : ${e.toString()}");
     } finally {
       state = MessagesViewState.idle;
     }
@@ -198,12 +228,22 @@ class MessagesViewModel with ChangeNotifier {
     try {
       DialogHelper.show(context, dialog, barrierDismissible: false);
       String messageId = Uuid().v4();
-      String? imageUrl = await _storageRepository.uploadMessageImage(
-        _currentDatabaseUserId,
-        _contactUser.userId,
-        messageId,
-        imageFile,
-      );
+      String? imageUrl;
+      if (_contactUser != null) {
+        imageUrl = await _storageRepository.uploadMessageImage(
+          _currentDatabaseUserId,
+          _contactUser!.userId,
+          messageId,
+          imageFile,
+        );
+      } else if (_channel != null) {
+        imageUrl = await _storageRepository.uploadChannelMessageImage(
+          _currentDatabaseUserId,
+          _channel!.channelId,
+          messageId,
+          imageFile,
+        );
+      }
       dialog.cancel(context);
       if (imageUrl != null && imageUrl.trim().isNotEmpty) {
         return await sendMessage(
@@ -212,12 +252,12 @@ class MessagesViewModel with ChangeNotifier {
           messageType: MessageType.image,
         );
       } else {
-        print("MessagesViewModel / sendImageMessage : Image url is null");
+        debugPrint("MessagesViewModel / sendImageMessage : Image url is null");
         return null;
       }
     } catch (e) {
       dialog.cancel(context);
-      print("MessagesViewModel / sendImageMessage : ${e.toString()}");
+      debugPrint("MessagesViewModel / sendImageMessage : ${e.toString()}");
       return null;
     }
   }
@@ -246,12 +286,13 @@ class MessagesViewModel with ChangeNotifier {
       Message m = Message(
         messageId: messageId,
         senderId: _currentDatabaseUserId,
-        receiverId: _contactUser.userId,
+        receiverId: _contactUser?.userId ?? '',
         messageBody: messageBody.trim(),
         sendStatus: MessageSendStatus.waiting,
         // will be changed on the service
         dateOfCreated: DateTime.now(),
         messageType: messageType,
+        channelId: channel?.channelId,
       );
       m.contactUser = _contactUser;
       _messages.insert(0, m);
@@ -267,7 +308,7 @@ class MessagesViewModel with ChangeNotifier {
         }
         //notifyListeners();
       } catch (e) {
-        print("MessagesViewModel / sendMessage : ${e.toString()}");
+        debugPrint("MessagesViewModel / sendMessage : ${e.toString()}");
       }
       return m;
     }
@@ -275,15 +316,17 @@ class MessagesViewModel with ChangeNotifier {
   }
 
   void _sendNotification(String messageBody) {
-    String notificationId = contactUser.notificationId;
-    if (notificationId.isNotEmpty &&
-        notificationId != firebaseSettings.defaultNotificationId) {
-      _notificationRepository.sendNotification(
-        title: contactUser.username,
-        body: messageBody,
-        receiverNotificationId: notificationId,
-        currentUserId: _currentDatabaseUserId,
-      );
+    if (_contactUser != null) {
+      String notificationId = _contactUser!.notificationId;
+      if (notificationId.isNotEmpty &&
+          notificationId != firebaseSettings.defaultNotificationId) {
+        _notificationRepository.sendNotification(
+          title: _contactUser!.username,
+          body: messageBody,
+          receiverNotificationId: notificationId,
+          currentUserId: _currentDatabaseUserId,
+        );
+      }
     }
   }
 
@@ -294,7 +337,11 @@ class MessagesViewModel with ChangeNotifier {
 
   void _addListener() {
     _newMessageSubscription = _messagesDatabaseRepository
-        .addListenerToMessages(_currentDatabaseUserId, _contactUser.userId)
+        .addListenerToMessages(
+      _currentDatabaseUserId,
+      _contactUser?.userId ?? '',
+      channelId: _channel?.channelId,
+    )
         .listen((messageList) {
       if (messageList.isNotEmpty) {
         Message? newMessage = messageList[0];

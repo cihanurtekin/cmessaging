@@ -2,7 +2,7 @@ import 'package:c_messaging/src/settings/page_settings.dart';
 import 'package:c_messaging/src/tools/assets.dart';
 import 'package:flutter/material.dart';
 
-class ContactsPageSettings extends PageSettings {
+class ChannelsPageSettings extends PageSettings {
   final bool showContactProfilePhoto;
   final bool showDivider;
   final double paddingTop;
@@ -24,7 +24,7 @@ class ContactsPageSettings extends PageSettings {
   final double noMessageTextSize;
   final double errorMessageTextSize;
 
-  ContactsPageSettings({
+  ChannelsPageSettings({
     super.paginationLimitForFirstQuery,
     super.paginationLimitForOtherQueries,
     super.buildScaffold,

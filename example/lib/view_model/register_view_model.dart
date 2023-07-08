@@ -69,7 +69,7 @@ class RegisterViewModel with ChangeNotifier {
         _navigateToAllUsersPage(context, currentUserId);
       }
     } catch (e) {
-      print("RegisterViewModel / signUpWithEmailAndPassword : ${e.toString()}");
+      debugPrint("RegisterViewModel / signUpWithEmailAndPassword : ${e.toString()}");
       //dialog.cancel(context);
       //DialogHelper.showErrorDialog(context, e);
     }

@@ -40,11 +40,11 @@ class AllUsersViewModel with ChangeNotifier {
             _users.add(u);
           }
         } catch (e) {
-          print("AllUsersViewModel/ getAllUsers / for loop : ${e.toString()}");
+          debugPrint("AllUsersViewModel/ getAllUsers / for loop : ${e.toString()}");
         }
       }
     } catch (e) {
-      print("AllUsersViewModel/ getAllUsers : ${e.toString()}");
+      debugPrint("AllUsersViewModel/ getAllUsers : ${e.toString()}");
     } finally {
       state = AllUsersViewState.Idle;
     }

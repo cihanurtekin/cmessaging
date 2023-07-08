@@ -9,6 +9,7 @@ import 'package:c_messaging/src/settings/settings_base.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:flutter/material.dart';
 import 'package:googleapis_auth/auth_io.dart';
 
 Future<void> _backgroundMessageHandler(RemoteMessage remoteMessage) async {
@@ -142,13 +143,15 @@ class FcmNotificationService implements NotificationService {
         currentUserId: currentUserId,
       );
 
-      print(notification);
+      debugPrint(notification);
 
       await client
           .post(notificationUrl, body: notification, headers: headers)
           .then((response) {
-        print("FcmNotificationService / sendNotification / Success Response : "
-            "${response.body}");
+        debugPrint(
+          "FcmNotificationService / sendNotification / Success Response : "
+          "${response.body}",
+        );
         result = NotificationResult.Success;
       }).catchError((e) {
         result = NotificationResult.Error;

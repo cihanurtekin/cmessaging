@@ -1,14 +1,8 @@
+import 'package:c_messaging/src/settings/page_settings.dart';
 import 'package:c_messaging/src/tools/assets.dart';
 import 'package:flutter/material.dart';
 
-class MessagesPageSettings {
-  final int paginationLimitForFirstQuery;
-  final int paginationLimitForOtherQueries;
-  final Color? appBarColor;
-  final Color? backIconColor;
-  final Color? titleTextColor;
-  final bool buildScaffold;
-  final bool showAppBar;
+class MessagesPageSettings extends PageSettings {
   final String? backgroundImageAssetPath;
   final String messagePhotoPlaceholderPath;
   final String profilePhotoPlaceholderPath;
@@ -23,19 +17,19 @@ class MessagesPageSettings {
   final double profilePhotoAndUsernameSpaceBetween;
   final double profilePhotoRadius;
   final Color? backgroundColor;
-  final Color profilePhotoBackgroundColor;
   final Color senderMessageBackgroundColor;
   final Color receiverMessageBackgroundColor;
   final Color sendMessageButtonColor;
 
   MessagesPageSettings({
-    this.paginationLimitForFirstQuery = 10,
-    this.paginationLimitForOtherQueries = 10,
-    this.appBarColor,
-    this.backIconColor,
-    this.titleTextColor,
-    this.buildScaffold = true,
-    this.showAppBar = true,
+    super.paginationLimitForFirstQuery,
+    super.paginationLimitForOtherQueries,
+    super.buildScaffold,
+    super.showAppBar,
+    super.profilePhotoBackgroundColor,
+    super.appBarColor,
+    super.backIconColor,
+    super.titleTextColor,
     this.backgroundImageAssetPath,
     this.messagePhotoPlaceholderPath = Assets.messagePhotoPlaceholder,
     this.profilePhotoPlaceholderPath = Assets.noPp,
@@ -50,7 +44,6 @@ class MessagesPageSettings {
     this.profilePhotoAndUsernameSpaceBetween = 8.0,
     this.profilePhotoRadius = 36.0,
     this.backgroundColor,
-    this.profilePhotoBackgroundColor = Colors.white,
     this.senderMessageBackgroundColor =
         const Color.fromARGB(255, 220, 248, 198),
     this.receiverMessageBackgroundColor = Colors.white,

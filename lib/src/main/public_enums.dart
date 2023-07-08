@@ -2,6 +2,8 @@ enum UserDatabaseServiceMode { Debug, Firestore }
 
 enum MessageDatabaseServiceMode { Debug, Firestore }
 
+enum ChannelDatabaseServiceMode { Debug, Firestore }
+
 enum NotificationServiceMode { Debug, FirebaseCloudMessaging }
 
 enum NotificationLocalServiceMode { Debug, OnlinePackage }

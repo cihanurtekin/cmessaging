@@ -13,8 +13,7 @@ class Message with ChangeNotifier {
   static const String statusKey = 'status';
   static const String sendStatusKey = 'sendStatus';
   static const String messageTypeKey = 'messageType';
-
-  //static const String randomIdKey = 'randomId';
+  static const String channelIdKey = 'channelId';
 
   String messageId;
   String contactId;
@@ -26,7 +25,7 @@ class Message with ChangeNotifier {
   int sendStatus;
   int messageType;
 
-  //String randomId = Uuid().v4();
+  String? channelId;
 
   User? contactUser;
 
@@ -40,11 +39,12 @@ class Message with ChangeNotifier {
     this.status = MessageStatus.active,
     this.sendStatus = MessageSendStatus.waiting,
     this.messageType = MessageType.text,
+    this.channelId,
   });
 
   Map<String, dynamic> toMap(
       {bool convertDateToMicrosecondsSinceEpoch = false}) {
-    return {
+    Map<String, dynamic> objectMap = {
       messageIdKey: messageId,
       contactIdKey: contactId,
       senderIdKey: senderId,
@@ -57,6 +57,10 @@ class Message with ChangeNotifier {
       sendStatusKey: sendStatus,
       messageTypeKey: messageType,
     };
+    if (channelId != null) {
+      objectMap[channelIdKey] = channelId;
+    }
+    return objectMap;
   }
 
   Message.fromMap(this.messageId, Map<String, dynamic> map)
@@ -67,7 +71,8 @@ class Message with ChangeNotifier {
         dateOfCreated = map[dateOfCreatedKey],
         status = map[statusKey] ?? MessageStatus.active,
         sendStatus = map[sendStatusKey] ?? MessageSendStatus.waiting,
-        messageType = map[messageTypeKey] ?? MessageType.text;
+        messageType = map[messageTypeKey] ?? MessageType.text,
+        channelId = map[channelIdKey];
 
   void updateSendStatus(int newSendStatus) async {
     sendStatus = newSendStatus;
@@ -101,6 +106,9 @@ class Message with ChangeNotifier {
     }
     if (newValues.containsKey(messageTypeKey)) {
       messageType = newValues[messageTypeKey];
+    }
+    if (newValues.containsKey(channelIdKey)) {
+      channelId = newValues[channelIdKey];
     }
     notifyListeners();
   }

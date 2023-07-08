@@ -6,7 +6,6 @@ abstract class StorageBase {
   void initialize(SettingsBase settings);
 
   Future<String?> uploadFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
@@ -14,7 +13,6 @@ abstract class StorageBase {
   );
 
   Future<String?> uploadImageFile(
-    String userId,
     String fileName,
     String folderName,
     File file,
@@ -23,6 +21,13 @@ abstract class StorageBase {
   Future<String?> uploadMessageImage(
     String senderId,
     String receiverId,
+    String fileName,
+    File imageFile,
+  );
+
+  Future<String?> uploadChannelMessageImage(
+    String senderId,
+    String channelId,
     String fileName,
     File imageFile,
   );

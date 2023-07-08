@@ -35,43 +35,53 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
     MessageDatabaseResult result = MessageDatabaseResult.Error;
 
     if (_firebaseSettings != null) {
-      message.contactId = message.receiverId;
-      Map<String, dynamic> messageMapDocRefSender = message.toMap();
-      message.contactId = message.senderId;
-      Map<String, dynamic> messageMapDocRefReceiver = message.toMap();
-
-      messageMapDocRefSender[Message.dateOfCreatedKey] =
-          FieldValue.serverTimestamp();
-      messageMapDocRefReceiver[Message.dateOfCreatedKey] =
-          FieldValue.serverTimestamp();
-
-      DocumentReference docRefSender =
-          _getFirestoreContactDocument(message.senderId, message.receiverId);
-      DocumentReference docRefReceiver =
-          _getFirestoreContactDocument(message.receiverId, message.senderId);
-      DocumentReference docRefSenderMessages = docRefSender
-          .collection(_firebaseSettings!.messagesOfUserCollectionName)
-          .doc(message.messageId);
-      DocumentReference docRefReceiverMessages = docRefReceiver
-          .collection(_firebaseSettings!.messagesOfUserCollectionName)
-          .doc(message.messageId);
-
-      await _firestore.runTransaction((transaction) {
-        return transaction.get(docRefSender).then((snapshot) {
-          transaction.set(docRefSender, messageMapDocRefSender);
-          transaction.set(docRefSenderMessages, messageMapDocRefSender);
-          transaction.set(docRefReceiver, messageMapDocRefReceiver);
-          transaction.set(docRefReceiverMessages, messageMapDocRefReceiver);
-        });
-      }, timeout: const Duration(seconds: 5)).then((_) {
+      if (message.channelId != null) {
+        await _firestore
+            .collection(_firebaseSettings!.channelsCollectionName)
+            .doc(message.channelId)
+            .collection(_firebaseSettings!.messagesOfChannelCollectionName)
+            .doc(message.messageId)
+            .set(message.toMap());
         result = MessageDatabaseResult.Success;
-      }).catchError((e) {
-        result = MessageDatabaseResult.Error;
-        print(
-            "FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}");
-      });
+      } else {
+        message.contactId = message.receiverId;
+        Map<String, dynamic> messageMapDocRefSender = message.toMap();
+        message.contactId = message.senderId;
+        Map<String, dynamic> messageMapDocRefReceiver = message.toMap();
 
-      /*
+        messageMapDocRefSender[Message.dateOfCreatedKey] =
+            FieldValue.serverTimestamp();
+        messageMapDocRefReceiver[Message.dateOfCreatedKey] =
+            FieldValue.serverTimestamp();
+
+        DocumentReference docRefSender =
+            _getFirestoreContactDocument(message.senderId, message.receiverId);
+        DocumentReference docRefReceiver =
+            _getFirestoreContactDocument(message.receiverId, message.senderId);
+        DocumentReference docRefSenderMessages = docRefSender
+            .collection(_firebaseSettings!.messagesOfUserCollectionName)
+            .doc(message.messageId);
+        DocumentReference docRefReceiverMessages = docRefReceiver
+            .collection(_firebaseSettings!.messagesOfUserCollectionName)
+            .doc(message.messageId);
+
+        await _firestore.runTransaction((transaction) {
+          return transaction.get(docRefSender).then((snapshot) {
+            transaction.set(docRefSender, messageMapDocRefSender);
+            transaction.set(docRefSenderMessages, messageMapDocRefSender);
+            transaction.set(docRefReceiver, messageMapDocRefReceiver);
+            transaction.set(docRefReceiverMessages, messageMapDocRefReceiver);
+          });
+        }, timeout: const Duration(seconds: 5)).then((_) {
+          result = MessageDatabaseResult.Success;
+        }).catchError((e) {
+          result = MessageDatabaseResult.Error;
+          debugPrint(
+            "FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}",
+          );
+        });
+
+        /*
     WriteBatch batch = _getWriteBatch(message);
 
     await batch.commit().then((_) {
@@ -79,9 +89,10 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
 
     }).catchError((e) {
       result = MessagesBaseResult.Error;
-      print("FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}");
+      debugPrint("FirestoreMessagesDatabaseService / sendMessage : ${e.toString()}");
     });
      */
+      }
     }
 
     return result;
@@ -123,6 +134,13 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
         colRef = colRef
             .doc(contactId)
             .collection(_firebaseSettings!.messagesOfUserCollectionName);
+      }
+
+      if (listType == ListType.channelMessages) {
+        colRef = _firestore
+            .collection(_firebaseSettings!.channelsCollectionName)
+            .doc(contactId)
+            .collection(_firebaseSettings!.messagesOfChannelCollectionName);
       }
 
       Query<Map<String, dynamic>> query = colRef
@@ -213,7 +231,7 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
 
       await deleteBatch.commit().catchError((e) {
         result = MessageDatabaseResult.Error;
-        print(
+        debugPrint(
           "FirestoreMessagesDatabaseService / deleteMessage : " + e.toString(),
         );
       });
@@ -233,7 +251,7 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
       return _deleteAllMessagesOfUserCollection(currentUserId, contactUid);
     }).catchError((e) {
       result = MessageDatabaseResult.Error;
-      print(
+      debugPrint(
         "FirestoreMessagesDatabaseService / deleteAllMessagesOfContact : "
         "${e.toString()}",
       );
@@ -257,7 +275,7 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
           try {
             ds.reference.set({Message.statusKey: MessageStatus.deleted});
           } catch (e) {
-            print(
+            debugPrint(
               "FirestoreMessagesDatabaseService / "
               "_deleteAllMessagesOfUserCollection : "
               "${e.toString()}",
@@ -302,24 +320,29 @@ class FirestoreMessageDatabaseService implements MessageDatabaseService {
   @override
   Stream<List<Message?>> addListenerToMessages(
     String currentUserId,
-    contactId,
-  ) {
+    contactId, {
+    String? channelId,
+  }) {
     if (_firebaseSettings != null) {
-      Stream<QuerySnapshot<Map<String, dynamic>>> qsStream =
-          _getFirestoreContactDocument(currentUserId, contactId)
-              .collection(_firebaseSettings!.messagesOfUserCollectionName)
-              .where(Message.statusKey, isEqualTo: MessageStatus.active)
-              .orderBy(Message.dateOfCreatedKey, descending: true)
-              .limit(1)
-              .snapshots();
+      CollectionReference<Map<String, dynamic>> colRef = channelId != null
+          ? _firestore
+              .collection(_firebaseSettings!.channelsCollectionName)
+              .doc(channelId)
+              .collection(_firebaseSettings!.messagesOfChannelCollectionName)
+          : _getFirestoreContactDocument(currentUserId, contactId)
+              .collection(_firebaseSettings!.messagesOfUserCollectionName);
+
+      Stream<QuerySnapshot<Map<String, dynamic>>> qsStream = colRef
+          .where(Message.statusKey, isEqualTo: MessageStatus.active)
+          .orderBy(Message.dateOfCreatedKey, descending: true)
+          .limit(1)
+          .snapshots();
 
       return qsStream.map(
         (querySnapshot) {
           return querySnapshot.docs.map(
             (DocumentSnapshot<Map<String, dynamic>> doc) {
-              return !doc.metadata.hasPendingWrites
-                  ? getMessageFromDocumentSnapshot(doc)
-                  : null;
+              return getMessageFromDocumentSnapshot(doc);
             },
           ).toList();
         },
