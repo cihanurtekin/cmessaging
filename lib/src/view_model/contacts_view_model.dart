@@ -210,7 +210,7 @@ class ContactsViewModel with ChangeNotifier {
     }
   }
 
-  void openMessagesPage(BuildContext context, Message message) {
+  void openMessagesPage(BuildContext context, Message message, Widget? appBar) {
     User? contactUser = message.contactUser;
     if (contactUser != null) {
       Navigator.push(
@@ -227,7 +227,11 @@ class ContactsViewModel with ChangeNotifier {
               firebaseSettings: firebaseSettings,
               languageSettings: languageSettings,
             ),
-            child: MessagesPage(messagesPageSettings, languageSettings),
+            child: MessagesPage(
+              messagesPageSettings,
+              languageSettings,
+              appBar: appBar,
+            ),
           ),
         ),
       );

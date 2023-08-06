@@ -33,6 +33,8 @@ class ChannelsPageSettings extends PageSettings {
     super.backIconColor,
     super.titleTextColor,
     super.profilePhotoBackgroundColor,
+    super.appBar,
+    super.noMessageWidget,
     this.showContactProfilePhoto = true,
     this.showDivider = true,
     this.paddingTop = 8.0,

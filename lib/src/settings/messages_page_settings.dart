@@ -30,6 +30,8 @@ class MessagesPageSettings extends PageSettings {
     super.appBarColor,
     super.backIconColor,
     super.titleTextColor,
+    super.appBar,
+    super.noMessageWidget,
     this.backgroundImageAssetPath,
     this.messagePhotoPlaceholderPath = Assets.messagePhotoPlaceholder,
     this.profilePhotoPlaceholderPath = Assets.noPp,

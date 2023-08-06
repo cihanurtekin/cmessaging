@@ -18,6 +18,8 @@ class PageSettings {
   final double noMessageImageWidth;
   final double noMessageTextSize;
   final double errorMessageTextSize;
+  final Widget? appBar;
+  final Widget? noMessageWidget;
 
   PageSettings({
     this.paginationLimitForFirstQuery = 10,
@@ -36,5 +38,7 @@ class PageSettings {
     this.noMessageImageWidth = 300.0,
     this.noMessageTextSize = 30.0,
     this.errorMessageTextSize = 30.0,
+    this.appBar,
+    this.noMessageWidget,
   });
 }

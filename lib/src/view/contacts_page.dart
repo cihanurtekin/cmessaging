@@ -2,6 +2,7 @@ import 'package:c_messaging/src/custom_widgets/no_message_background.dart';
 import 'package:c_messaging/src/custom_widgets/profile_photo.dart';
 import 'package:c_messaging/src/custom_widgets/shimmer.dart';
 import 'package:c_messaging/src/model/message.dart';
+import 'package:c_messaging/src/model/user.dart';
 import 'package:c_messaging/src/settings/contacts_page_settings.dart';
 import 'package:c_messaging/src/settings/language_settings.dart';
 import 'package:c_messaging/src/tools/converter.dart';
@@ -27,9 +28,9 @@ class MessageContactsPage extends StatelessWidget {
     return _pageSettings.buildScaffold
         ? Scaffold(
             appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
-            body: _buildBody(context),
+            body: _buildBodyWithAppBar(context),
           )
-        : _buildBody(context);
+        : _buildBodyWithAppBar(context);
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -57,6 +58,22 @@ class MessageContactsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildBodyWithAppBar(BuildContext context) {
+    return _pageSettings.appBar != null
+        ? SafeArea(
+            child: Column(
+              children: [
+                _pageSettings.appBar!,
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _buildBody(context),
+                ),
+              ],
+            ),
+          )
+        : _buildBody(context);
+  }
+
   Widget _buildBody(BuildContext context) {
     return Consumer<ContactsViewModel>(
       builder: (context, viewModel, child) {
@@ -76,12 +93,13 @@ class MessageContactsPage extends StatelessWidget {
   }
 
   Widget _buildNoMessageBody() {
-    return NoMessageBackground(
-      assetImagePath: _pageSettings.noMessageAssetImagePath,
-      textContent: _languageSettings.contactsPageNoMessageTextContent,
-      imageWidth: _pageSettings.noMessageImageWidth,
-      textSize: _pageSettings.noMessageTextSize,
-    );
+    return _pageSettings.noMessageWidget ??
+        NoMessageBackground(
+          assetImagePath: _pageSettings.noMessageAssetImagePath,
+          textContent: _languageSettings.contactsPageNoMessageTextContent,
+          imageWidth: _pageSettings.noMessageImageWidth,
+          textSize: _pageSettings.noMessageTextSize,
+        );
   }
 
   Widget _buildErrorBody(BuildContext context) {
@@ -267,7 +285,18 @@ class MessageContactsPage extends StatelessWidget {
         ),
         onTap: () {
           if (message != null) {
-            viewModel.openMessagesPage(context, message);
+            Widget? messagesAppBar;
+
+            User? user = message.contactUser;
+            if (_pageSettings.createMessagesAppBar != null && user != null) {
+              messagesAppBar = _pageSettings.createMessagesAppBar?.call(
+                user.userId,
+                user.username,
+                user.profilePhotoUrl,
+                user.notificationId,
+              );
+            }
+            viewModel.openMessagesPage(context, message, messagesAppBar);
           }
         },
         //onLongPress: () => _onListTileLongPressed(context, index),

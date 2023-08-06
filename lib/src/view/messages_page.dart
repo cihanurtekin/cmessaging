@@ -20,7 +20,10 @@ class MessagesPage extends StatelessWidget {
 
   final LanguageSettings _languageSettings;
 
-  MessagesPage(this._pageSettings, this._languageSettings);
+  final Widget? _appBar;
+
+  MessagesPage(this._pageSettings, this._languageSettings, {Widget? appBar})
+      : _appBar = appBar;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +32,10 @@ class MessagesPage extends StatelessWidget {
       child: _pageSettings.buildScaffold
           ? Scaffold(
               appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
-              body: _buildBody(context),
+              body: _buildBodyWithAppBar(context),
+              backgroundColor: _pageSettings.backgroundColor,
             )
-          : _buildBody(context),
+          : _buildBodyWithAppBar(context),
     );
   }
 
@@ -86,6 +90,22 @@ class MessagesPage extends StatelessWidget {
       ),
       backgroundColor: _pageSettings.appBarColor,
     );
+  }
+
+  Widget _buildBodyWithAppBar(BuildContext context) {
+    return _appBar != null
+        ? SafeArea(
+            child: Column(
+              children: [
+                _appBar!,
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _buildBody(context),
+                ),
+              ],
+            ),
+          )
+        : _buildBody(context);
   }
 
   Widget _buildBody(BuildContext context) {

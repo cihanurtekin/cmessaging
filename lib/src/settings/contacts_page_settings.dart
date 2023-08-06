@@ -1,3 +1,4 @@
+import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/page_settings.dart';
 import 'package:c_messaging/src/tools/assets.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,12 @@ class ContactsPageSettings extends PageSettings {
   final double noMessageImageWidth;
   final double noMessageTextSize;
   final double errorMessageTextSize;
+  final Widget Function(
+    String userId,
+    String fullName,
+    String profilePhotoUrl,
+    String notificationId,
+  )? createMessagesAppBar;
 
   ContactsPageSettings({
     super.paginationLimitForFirstQuery,
@@ -33,6 +40,8 @@ class ContactsPageSettings extends PageSettings {
     super.backIconColor,
     super.titleTextColor,
     super.profilePhotoBackgroundColor,
+    super.appBar,
+    super.noMessageWidget,
     this.showContactProfilePhoto = true,
     this.showDivider = true,
     this.paddingTop = 8.0,
@@ -53,5 +62,6 @@ class ContactsPageSettings extends PageSettings {
     this.noMessageImageWidth = 300.0,
     this.noMessageTextSize = 30.0,
     this.errorMessageTextSize = 30.0,
+    this.createMessagesAppBar,
   });
 }

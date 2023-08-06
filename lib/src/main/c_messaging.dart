@@ -186,8 +186,9 @@ class CMessaging {
     String contactUserId,
     String contactUsername,
     String contactProfilePhotoUrl,
-    String contactNotificationId,
-  ) {
+    String contactNotificationId, {
+    Widget? appBar,
+  }) {
     User contactUser = User(
       userId: contactUserId,
       username: contactUsername,
@@ -212,7 +213,11 @@ class CMessaging {
               firebaseSettings: _firebaseSettings!,
               languageSettings: _languageSettings!,
             ),
-            child: MessagesPage(_messagesPageSettings!, _languageSettings!),
+            child: MessagesPage(
+              _messagesPageSettings!,
+              _languageSettings!,
+              appBar: appBar,
+            ),
           ),
         ),
       );

@@ -27,9 +27,9 @@ class MessageChannelsPage extends StatelessWidget {
     return _pageSettings.buildScaffold
         ? Scaffold(
             appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
-            body: _buildBody(context),
+            body: _buildBodyWithAppBar(context),
           )
-        : _buildBody(context);
+        : _buildBodyWithAppBar(context);
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -57,6 +57,22 @@ class MessageChannelsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildBodyWithAppBar(BuildContext context) {
+    return _pageSettings.appBar != null
+        ? SafeArea(
+            child: Column(
+              children: [
+                _pageSettings.appBar!,
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _buildBody(context),
+                ),
+              ],
+            ),
+          )
+        : _buildBody(context);
+  }
+
   Widget _buildBody(BuildContext context) {
     return Consumer<ChannelsViewModel>(
       builder: (context, viewModel, child) {
@@ -76,12 +92,13 @@ class MessageChannelsPage extends StatelessWidget {
   }
 
   Widget _buildNoMessageBody() {
-    return NoMessageBackground(
-      assetImagePath: _pageSettings.noMessageAssetImagePath,
-      textContent: _languageSettings.contactsPageNoMessageTextContent,
-      imageWidth: _pageSettings.noMessageImageWidth,
-      textSize: _pageSettings.noMessageTextSize,
-    );
+    return _pageSettings.noMessageWidget ??
+        NoMessageBackground(
+          assetImagePath: _pageSettings.noMessageAssetImagePath,
+          textContent: _languageSettings.contactsPageNoMessageTextContent,
+          imageWidth: _pageSettings.noMessageImageWidth,
+          textSize: _pageSettings.noMessageTextSize,
+        );
   }
 
   Widget _buildErrorBody(BuildContext context) {
