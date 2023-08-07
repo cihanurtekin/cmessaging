@@ -9,6 +9,7 @@ class PageSettings {
   final Color? appBarColor;
   final Color? backIconColor;
   final Color? titleTextColor;
+  final Color? backgroundColor;
   final Color profilePhotoBackgroundColor;
   final Color usernameTextColor;
   final Color lastMessageTextColor;
@@ -29,6 +30,7 @@ class PageSettings {
     this.appBarColor,
     this.backIconColor,
     this.titleTextColor,
+    this.backgroundColor,
     this.profilePhotoBackgroundColor = Colors.white,
     this.usernameTextColor = Colors.black,
     this.lastMessageTextColor = Colors.grey,

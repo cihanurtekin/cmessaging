@@ -1,4 +1,3 @@
-import 'package:c_messaging/src/model/message.dart';
 import 'package:c_messaging/src/settings/page_settings.dart';
 import 'package:c_messaging/src/tools/assets.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +39,7 @@ class ContactsPageSettings extends PageSettings {
     super.backIconColor,
     super.titleTextColor,
     super.profilePhotoBackgroundColor,
+    super.backgroundColor,
     super.appBar,
     super.noMessageWidget,
     this.showContactProfilePhoto = true,

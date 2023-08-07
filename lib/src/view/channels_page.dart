@@ -28,6 +28,7 @@ class MessageChannelsPage extends StatelessWidget {
         ? Scaffold(
             appBar: _pageSettings.showAppBar ? _buildAppBar(context) : null,
             body: _buildBodyWithAppBar(context),
+            backgroundColor: _pageSettings.backgroundColor,
           )
         : _buildBodyWithAppBar(context);
   }

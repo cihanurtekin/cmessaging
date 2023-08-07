@@ -16,7 +16,6 @@ class MessagesPageSettings extends PageSettings {
   final double messageWritingTextFieldMinHeight;
   final double profilePhotoAndUsernameSpaceBetween;
   final double profilePhotoRadius;
-  final Color? backgroundColor;
   final Color senderMessageBackgroundColor;
   final Color receiverMessageBackgroundColor;
   final Color sendMessageButtonColor;
@@ -30,6 +29,7 @@ class MessagesPageSettings extends PageSettings {
     super.appBarColor,
     super.backIconColor,
     super.titleTextColor,
+    super.backgroundColor,
     super.appBar,
     super.noMessageWidget,
     this.backgroundImageAssetPath,
@@ -45,7 +45,6 @@ class MessagesPageSettings extends PageSettings {
     this.messageWritingTextFieldMinHeight = 48.0,
     this.profilePhotoAndUsernameSpaceBetween = 8.0,
     this.profilePhotoRadius = 36.0,
-    this.backgroundColor,
     this.senderMessageBackgroundColor =
         const Color.fromARGB(255, 220, 248, 198),
     this.receiverMessageBackgroundColor = Colors.white,
